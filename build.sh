@@ -5,16 +5,16 @@ TOOLCHAIN_PATH=~/opt/cross/bin/
 
 input_files=(
     "kernel/kernel.c"
-    "kernel/include/kernel/framebuffer.c"
-    "kernel/include/kernel/ide.c"
-    "kernel/include/kernel/io.c"
-    "kernel/include/kernel/ramdisk.c"
-    "kernel/include/kernel/serial.c"
+    "kernel/framebuffer.c"
+    "kernel/ide.c"
+    "kernel/io.c"
+    "kernel/ramdisk.c"
+    "kernel/serial.c"
 
-    "kernel/include/fatfs/diskio.c"
-    "kernel/include/fatfs/ff.c"
-    "kernel/include/fatfs/ffsystem.c"
-    "kernel/include/fatfs/ffunicode.c"
+    "kernel/fatfs/diskio.c"
+    "kernel/fatfs/ff.c"
+    "kernel/fatfs/ffsystem.c"
+    "kernel/fatfs/ffunicode.c"
 
     "libc/stdio/kprintf.c"
     "libc/stdio/printf.c"
@@ -36,16 +36,16 @@ input_files=(
 
 output_files=(
     "build/kernel/kernel.o"
-    "build/kernel/include/kernel/framebuffer.o"
-    "build/kernel/include/kernel/ide.o"
-    "build/kernel/include/kernel/io.o"
-    "build/kernel/include/kernel/ramdisk.o"
-    "build/kernel/include/kernel/serial.o"
+    "build/kernel/framebuffer.o"
+    "build/kernel/ide.o"
+    "build/kernel/io.o"
+    "build/kernel/ramdisk.o"
+    "build/kernel/serial.o"
 
-    "build/kernel/include/fatfs/diskio.o"
-    "build/kernel/include/fatfs/ff.o"
-    "build/kernel/include/fatfs/ffsystem.o"
-    "build/kernel/include/fatfs/ffunicode.o"
+    "build/kernel/fatfs/diskio.o"
+    "build/kernel/fatfs/ff.o"
+    "build/kernel/fatfs/ffsystem.o"
+    "build/kernel/fatfs/ffunicode.o"
 
     "build/libc/stdio/kprintf.o"
     "build/libc/stdio/printf.o"
@@ -65,7 +65,7 @@ output_files=(
     "build/libc/string/strchr.o"
 )
 
-mkdir -p build/kernel/include/{kernel,fatfs}
+mkdir -p build/kernel/fatfs
 mkdir -p build/libc/{stdio,stdlib,string}
 
 ${TOOLCHAIN_PATH}i686-elf-as kernel/boot.s -o build/kernel/boot.o

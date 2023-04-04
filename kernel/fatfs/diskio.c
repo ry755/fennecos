@@ -7,8 +7,8 @@
 /* storage control modules to the FatFs module with a defined API.       */
 /*-----------------------------------------------------------------------*/
 
-#include "ff.h"			/* Obtains integer types */
-#include "diskio.h"		/* Declarations of disk functions */
+#include <fatfs/ff.h>		/* Obtains integer types */
+#include <fatfs/diskio.h>	/* Declarations of disk functions */
 
 #include <kernel/ide.h>
 #include <kernel/ramdisk.h>

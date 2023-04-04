@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "ramdisk_mbr.h"
+#include <kernel/ramdisk_mbr.h>
 
 uint8_t ramdisk_mkfs_work[512];
 MKFS_PARM ramdisk_mkfs_parm = {
