@@ -8,6 +8,7 @@ input_files=(
     "kernel/include/kernel/framebuffer.c"
     "kernel/include/kernel/ide.c"
     "kernel/include/kernel/io.c"
+    "kernel/include/kernel/ramdisk.c"
     "kernel/include/kernel/serial.c"
 
     "kernel/include/fatfs/diskio.c"
@@ -38,6 +39,7 @@ output_files=(
     "build/kernel/include/kernel/framebuffer.o"
     "build/kernel/include/kernel/ide.o"
     "build/kernel/include/kernel/io.o"
+    "build/kernel/include/kernel/ramdisk.o"
     "build/kernel/include/kernel/serial.o"
 
     "build/kernel/include/fatfs/diskio.o"

@@ -1,6 +1,9 @@
 #include <kernel/ide.h>
 #include <kernel/io.h>
 
+#include <fatfs/ff.h>
+#include <fatfs/diskio.h>
+
 #include <stdint.h>
 
 uint8_t temporary_sector_buffer[SECTOR_SIZE];
@@ -23,7 +26,7 @@ void read_sector(void *destination, uint32_t sector) {
     insl(0x1F0, destination, SECTOR_SIZE / 4);
 }
 
-void write_sector(void *source, uint32_t sector) {
+void write_sector(const void *source, uint32_t sector) {
     wait_for_disk();
     outb(0x1F2, 1);
     outb(0x1F3, sector);
@@ -34,4 +37,10 @@ void write_sector(void *source, uint32_t sector) {
 
     wait_for_disk();
     outsl(0x1F0, source, SECTOR_SIZE / 4);
+}
+
+DRESULT ide_ioctl(unsigned char command, void *buffer) {
+    (void) command;
+    (void) buffer;
+    return RES_NOTRDY;
 }

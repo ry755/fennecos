@@ -6,6 +6,7 @@
 #include <kernel/ide.h>
 #include <kernel/io.h>
 #include <kernel/multiboot.h>
+#include <kernel/ramdisk.h>
 #include <kernel/serial.h>
 
 #include <fatfs/ff.h>
@@ -15,6 +16,7 @@ extern uint8_t font[FONT_WIDTH * FONT_HEIGHT * 256];
 void kernel_main(multiboot_info_t *multiboot_struct) {
     init_serial();
     init_framebuffer(multiboot_struct->framebuffer_addr, 0xFF123456);
+    //init_ramdisk();
 
     // mount the hard disk
     write_serial_string("mounting hard disk\n");
@@ -55,6 +57,15 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     if (bytes_written != 69)
         write_serial_string("log file written short\n");
     f_close(&file_to_write);
+
+    // unmount the hard disk
+    write_serial_string("unmounting hard disk\n");
+    result = f_unmount("1:");
+    if (result != FR_OK) {
+        write_serial_string("failed to unmount 1:\n");
+        printf("error: %d\n", result);
+        abort();
+    }
 
     abort();
 }

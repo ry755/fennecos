@@ -11,12 +11,11 @@
 #include "diskio.h"		/* Declarations of disk functions */
 
 #include <kernel/ide.h>
+#include <kernel/ramdisk.h>
 
 /* Definitions of physical drive number for each drive */
 #define DEV_RAM 0
 #define DEV_IDE 1
-
-extern uint8_t temporary_sector_buffer[SECTOR_SIZE];
 
 /*-----------------------------------------------------------------------*/
 /* Get Drive Status                                                      */
@@ -26,9 +25,6 @@ DSTATUS disk_status (
     BYTE pdrv		/* Physical drive nmuber to identify the drive */
 )
 {
-    DSTATUS stat;
-    int result;
-
     switch (pdrv) {
     case DEV_RAM:
         return RES_OK;
@@ -50,13 +46,9 @@ DSTATUS disk_initialize (
     BYTE pdrv				/* Physical drive nmuber to identify the drive */
 )
 {
-    DSTATUS stat;
-    int result;
-
     switch (pdrv) {
     case DEV_RAM:
-        //result = init_ramdisk();
-        return RES_NOTRDY;
+        return RES_OK;
 
     case DEV_IDE:
         return RES_OK;
@@ -78,12 +70,17 @@ DRESULT disk_read (
     UINT count		/* Number of sectors to read */
 )
 {
-    DRESULT res;
-    int result;
-
     switch (pdrv) {
     case DEV_RAM:
-        break;
+        if (!buff)
+            return RES_PARERR;
+
+        for (; count > 0; count--) {
+            read_ramdisk_sector(buff, sector++);
+            buff += 512;
+        }
+
+        return RES_OK;
 
     case DEV_IDE:
         if (!buff)
@@ -115,14 +112,17 @@ DRESULT disk_write (
     UINT count			/* Number of sectors to write */
 )
 {
-    DRESULT res;
-    int result;
-
     switch (pdrv) {
     case DEV_RAM:
-        res = RES_NOTRDY;
+        if (!buff)
+            return RES_PARERR;
 
-        return res;
+        for (; count > 0; count--) {
+            write_ramdisk_sector(buff, sector++);
+            buff += 512;
+        }
+
+        return RES_OK;
 
     case DEV_IDE:
         if (!buff)
@@ -152,19 +152,12 @@ DRESULT disk_ioctl (
     void *buff		/* Buffer to send/receive control data */
 )
 {
-    DRESULT res;
-    int result;
-
     switch (pdrv) {
     case DEV_RAM:
-        res = RES_NOTRDY;
-
-        return res;
+        return ramdisk_ioctl(cmd, buff);
 
     case DEV_IDE:
-        res = RES_NOTRDY;
-
-        return res;
+        return ide_ioctl(cmd, buff);
     }
 
     return RES_PARERR;
