@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <kernel/framebuffer.h>
+#include <kernel/gdt.h>
 #include <kernel/ide.h>
 #include <kernel/io.h>
 #include <kernel/multiboot.h>
@@ -14,6 +15,7 @@
 extern uint8_t font[FONT_WIDTH * FONT_HEIGHT * 256];
 
 void kernel_main(multiboot_info_t *multiboot_struct) {
+    init_gdt();
     init_serial();
     init_framebuffer(multiboot_struct->framebuffer_addr, 0xFF123456);
     //init_ramdisk();

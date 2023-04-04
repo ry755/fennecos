@@ -6,6 +6,7 @@ TOOLCHAIN_PATH=~/opt/cross/bin/
 input_files=(
     "kernel/kernel.c"
     "kernel/framebuffer.c"
+    "kernel/gdt.c"
     "kernel/ide.c"
     "kernel/io.c"
     "kernel/ramdisk.c"
@@ -37,6 +38,7 @@ input_files=(
 output_files=(
     "build/kernel/kernel.o"
     "build/kernel/framebuffer.o"
+    "build/kernel/gdt.o"
     "build/kernel/ide.o"
     "build/kernel/io.o"
     "build/kernel/ramdisk.o"
