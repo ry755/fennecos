@@ -28,6 +28,14 @@ inline uint8_t inl(uint16_t port) {
     return return_value;
 }
 
+inline void outsl(int port, const void *addr, int cnt) {
+    asm volatile("cld; rep outsl" :
+                "=S" (addr), "=c" (cnt) :
+                "d" (port), "0" (addr), "1" (cnt) :
+                "cc"
+    );
+}
+
 inline void outb(uint16_t port, uint8_t val) {
     asm volatile ( "outb %0, %1" : : "a"(val), "Nd"(port) );
 }

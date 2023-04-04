@@ -89,7 +89,10 @@ DRESULT disk_read (
         if (!buff)
             return RES_PARERR;
 
-        read_sector(buff, sector);
+        for (; count > 0; count--) {
+            read_sector(buff, sector++);
+            buff += 512;
+        }
 
         return RES_OK;
     }
@@ -122,10 +125,15 @@ DRESULT disk_write (
         return res;
 
     case DEV_IDE:
-        //result = MMC_disk_write(buff, sector, count);
-        res = RES_NOTRDY;
+        if (!buff)
+            return RES_PARERR;
 
-        return res;
+        for (; count > 0; count--) {
+            write_sector(buff, sector++);
+            buff += 512;
+        }
+
+        return RES_OK;
     }
 
     return RES_PARERR;
