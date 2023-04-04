@@ -1,2 +1,4 @@
-# fennecos
-FennecOS - a small 32-bit x86 operating system
+# FennecOS
+
+## Screenshot
+![screenshot](docs/screenshots/screenshot1.png)
