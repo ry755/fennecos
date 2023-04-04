@@ -26,6 +26,10 @@ mount $loop_part mountdir
 cd mountdir
 cp -r ../base_image/* .
 ${GRUB_INSTALL} --modules=part_msdos --locales="" --themes="" --target=i386-pc --boot-directory="$PWD/boot" $loop_device
+if [ $GRUB_INSTALL = "grub2-install" ]; then
+    mv boot/grub/* boot/grub2/
+    rm -rf boot/grub
+fi
 cd ..
 
 umount mountdir
