@@ -1,0 +1,5 @@
+.vscode/
+
+boot.img
+base_image/boot/fennecos.bin
+build/
