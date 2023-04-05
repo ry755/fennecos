@@ -1,5 +1,7 @@
 .vscode/
 
 boot.img
-base_image/boot/fennecos.bin
+base_image/boot/fennecos.elf
+base_image/boot/fennecos.sym
+bochs.conf
 build/
