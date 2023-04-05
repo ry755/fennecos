@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-void exception_handler(uint8_t num, uint32_t error) {
-    printf("INTERRUPT/EXCEPTION: num = %d, error = 0x%x\n", num, error);
-    end_of_interrupt(num);
+void interrupt_handler(uint8_t irq, uint32_t error) {
+    end_of_interrupt(irq);
 }

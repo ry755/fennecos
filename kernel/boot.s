@@ -62,13 +62,13 @@ flush_gdt:
 flush:
     ret
 
-.extern exception_handler
+.extern interrupt_handler
 .macro ISR_NOERR num
 .global isr_stub_\num
 isr_stub_\num:
     pushl $0x00000000
     push $\num
-    call exception_handler
+    call interrupt_handler
     cli
 1:  hlt
     jmp 1b
@@ -77,7 +77,7 @@ isr_stub_\num:
 .global isr_stub_\num
 isr_stub_\num:
     push $\num
-    call exception_handler
+    call interrupt_handler
     cli
 1:  hlt
     jmp 1b
@@ -88,7 +88,7 @@ irq_stub_\num:
     pusha
     pushl $0x00000000
     push $\irq
-    call exception_handler
+    call interrupt_handler
     add $8, %esp
     popa
     iret

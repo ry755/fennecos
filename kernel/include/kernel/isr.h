@@ -2,4 +2,4 @@
 
 #include <stdint.h>
 
-void exception_handler(uint8_t num, uint32_t error);
+void interrupt_handler(uint8_t irq, uint32_t error);
