@@ -18,7 +18,7 @@ void interrupt_handler(uint8_t irq, uint32_t error) {
     if (irq < 32) {
         exception_handler(irq, error);
     } else {
-        void (*handler)(uint8_t irq, uint32_t error) = irq_handlers[irq - 32];
+        void (*handler)() = irq_handlers[irq - 32];
         if (handler) {
             handler(irq, error);
         } else {
