@@ -8,7 +8,10 @@ input_files=(
     "kernel/framebuffer.c"
     "kernel/gdt.c"
     "kernel/ide.c"
+    "kernel/idt.c"
     "kernel/io.c"
+    "kernel/isr.c"
+    "kernel/pic.c"
     "kernel/ramdisk.c"
     "kernel/serial.c"
 
@@ -40,7 +43,10 @@ output_files=(
     "build/kernel/framebuffer.o"
     "build/kernel/gdt.o"
     "build/kernel/ide.o"
+    "build/kernel/idt.o"
     "build/kernel/io.o"
+    "build/kernel/isr.o"
+    "build/kernel/pic.o"
     "build/kernel/ramdisk.o"
     "build/kernel/serial.o"
 
