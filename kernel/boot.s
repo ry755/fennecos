@@ -66,8 +66,8 @@ flush:
 .macro ISR_NOERR num
 .global isr_stub_\num
 isr_stub_\num:
-    push $\num
     pushl $0x00000000
+    push $\num
     call exception_handler
     cli
 1:  hlt
@@ -86,7 +86,7 @@ isr_stub_\num:
 .global irq_stub_\num
 irq_stub_\num:
     pusha
-    push $0x00
+    pushl $0x00000000
     push $\irq
     call exception_handler
     add $8, %esp
@@ -126,7 +126,6 @@ ISR_NOERR 28
 ISR_NOERR 29
 ISR_NOERR 30
 ISR_NOERR 31
-ISR_NOERR 127
 
 IRQ_ENTRY 0, 32
 IRQ_ENTRY 1, 33
