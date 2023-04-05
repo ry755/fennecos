@@ -140,6 +140,9 @@ IRQ_ENTRY 9, 41
 IRQ_ENTRY 10, 42
 IRQ_ENTRY 11, 43
 IRQ_ENTRY 12, 44
+IRQ_ENTRY 13, 45
+IRQ_ENTRY 14, 46
+IRQ_ENTRY 15, 47
 
 .global isr_stub_table
 isr_stub_table:
@@ -188,5 +191,8 @@ isr_stub_table:
     .long irq_stub_10
     .long irq_stub_11
     .long irq_stub_12
+    .long irq_stub_13
+    .long irq_stub_14
+    .long irq_stub_15
 
 .size _start, . - _start
