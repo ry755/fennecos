@@ -12,6 +12,7 @@
 #include <kernel/pit.h>
 #include <kernel/ramdisk.h>
 #include <kernel/serial.h>
+#include <kernel/timer.h>
 
 #include <fatfs/ff.h>
 
@@ -23,6 +24,7 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     init_pit();
     init_pic();
     init_ide();
+    init_timer();
     init_idt();
     init_framebuffer(multiboot_struct->framebuffer_addr, 0xFF123456);
     //init_ramdisk();

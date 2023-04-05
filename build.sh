@@ -15,6 +15,7 @@ input_files=(
     "kernel/pit.c"
     "kernel/ramdisk.c"
     "kernel/serial.c"
+    "kernel/timer.c"
 
     "kernel/fatfs/diskio.c"
     "kernel/fatfs/ff.c"
@@ -51,6 +52,7 @@ output_files=(
     "build/kernel/pit.o"
     "build/kernel/ramdisk.o"
     "build/kernel/serial.o"
+    "build/kernel/timer.o"
 
     "build/kernel/fatfs/diskio.o"
     "build/kernel/fatfs/ff.o"
