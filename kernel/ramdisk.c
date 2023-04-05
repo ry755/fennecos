@@ -23,8 +23,8 @@ MKFS_PARM ramdisk_mkfs_parm = {
 void init_ramdisk() {
     FRESULT result = f_mkfs("0:", &ramdisk_mkfs_parm, ramdisk_mkfs_work, 512);
     if (result != FR_OK) {
-        write_serial_string("failed to format 0:\n");
-        printf("error: %d\n", result);
+        kprintf("failed to format 0:\n");
+        kprintf("error: %d\n", result);
         abort();
     }
 }
