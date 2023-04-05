@@ -1,12 +1,15 @@
 #include <kernel/ide.h>
 #include <kernel/io.h>
+#include <kernel/isr.h>
 
 #include <fatfs/ff.h>
 #include <fatfs/diskio.h>
 
 #include <stdint.h>
 
-uint8_t temporary_sector_buffer[SECTOR_SIZE];
+void init_ide() {
+    install_interrupt_handler(14, ide_interrupt_handler);
+}
 
 void wait_for_disk() {
     // wait for the disk to become ready
@@ -43,4 +46,8 @@ DRESULT ide_ioctl(unsigned char command, void *buffer) {
     (void) command;
     (void) buffer;
     return RES_NOTRDY;
+}
+
+void ide_interrupt_handler() {
+    // nothing
 }

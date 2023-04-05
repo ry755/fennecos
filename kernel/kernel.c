@@ -22,6 +22,7 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     init_serial();
     init_pit();
     init_pic();
+    init_ide();
     init_idt();
     init_framebuffer(multiboot_struct->framebuffer_addr, 0xFF123456);
     //init_ramdisk();
