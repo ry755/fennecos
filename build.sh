@@ -12,6 +12,7 @@ input_files=(
     "kernel/io.c"
     "kernel/isr.c"
     "kernel/pic.c"
+    "kernel/pit.c"
     "kernel/ramdisk.c"
     "kernel/serial.c"
 
@@ -47,6 +48,7 @@ output_files=(
     "build/kernel/io.o"
     "build/kernel/isr.o"
     "build/kernel/pic.o"
+    "build/kernel/pit.o"
     "build/kernel/ramdisk.o"
     "build/kernel/serial.o"
 
