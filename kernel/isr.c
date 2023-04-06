@@ -1,5 +1,7 @@
 #include <kernel/isr.h>
 #include <kernel/pic.h>
+#include <kernel/syscall.h>
+#include <kernel/trapframe.h>
 
 #include <stdint.h>
 #include <stdio.h>
@@ -14,13 +16,16 @@ void uninstall_interrupt_handler(uint8_t irq) {
     irq_handlers[irq] = 0;
 }
 
-void interrupt_handler(uint8_t irq, uint32_t error) {
+void interrupt_handler(uint8_t irq, trap_frame_t *trap_frame, uint32_t error) {
     if (irq < 32) {
         exception_handler(irq, error);
+    } else if (irq == 48) {
+        // syscall !!
+        trap_frame->eax = syscall(trap_frame->eax, trap_frame->esp);
     } else {
-        void (*handler)() = irq_handlers[irq - 32];
+        void (*handler)(uint8_t irq, trap_frame_t *trap_frame, uint32_t error) = irq_handlers[irq - 32];
         if (handler) {
-            handler(irq, error);
+            handler(irq, trap_frame, error);
         } else {
             kprintf("unhandled interrupt! irq: %d, error: %x\n", irq, error);
         }

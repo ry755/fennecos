@@ -1,5 +1,6 @@
 #include <kernel/isr.h>
 #include <kernel/timer.h>
+#include <kernel/trapframe.h>
 
 #include <stdint.h>
 
@@ -10,7 +11,10 @@ void init_timer() {
     install_interrupt_handler(0, timer_interrupt_handler);
 }
 
-void timer_interrupt_handler() {
+void timer_interrupt_handler(uint8_t irq, trap_frame_t *trap_frame, uint32_t error) {
+    (void) irq;
+    (void) trap_frame;
+    (void) error;
     timer++;
 }
 

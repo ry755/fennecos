@@ -1,5 +1,7 @@
 #pragma once
 
+#include <kernel/trapframe.h>
+
 #include <fatfs/ff.h>
 #include <fatfs/diskio.h>
 
@@ -12,4 +14,4 @@ void wait_for_disk();
 void read_sector(void *destination, uint32_t sector);
 void write_sector(const void *source, uint32_t sector);
 DRESULT ide_ioctl(unsigned char command, void *buffer);
-void ide_interrupt_handler();
+void ide_interrupt_handler(uint8_t irq, trap_frame_t *trap_frame, uint32_t error);

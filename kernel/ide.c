@@ -48,6 +48,9 @@ DRESULT ide_ioctl(unsigned char command, void *buffer) {
     return RES_NOTRDY;
 }
 
-void ide_interrupt_handler() {
+void ide_interrupt_handler(uint8_t irq, trap_frame_t *trap_frame, uint32_t error) {
+    (void) irq;
+    (void) trap_frame;
+    (void) error;
     // nothing
 }

@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#define IDT_ENTRIES 48
+#define IDT_ENTRIES 49
 
 typedef struct {
     uint16_t isr_low;   // lower 16 bits of the ISR's address

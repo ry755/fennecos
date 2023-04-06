@@ -67,6 +67,7 @@ flush:
 .global isr_stub_\num
 isr_stub_\num:
     pushl $0x00000000
+    pushl $0x00000000
     push $\num
     call interrupt_handler
     cli
@@ -76,6 +77,7 @@ isr_stub_\num:
 .macro ISR_ERR num
 .global isr_stub_\num
 isr_stub_\num:
+    pushl $0x00000000
     push $\num
     call interrupt_handler
     cli
@@ -85,15 +87,27 @@ isr_stub_\num:
 .macro IRQ_ENTRY num, irq
 .global irq_stub_\num
 irq_stub_\num:
-    pusha
+    pushl %ds
+    pushl %es
+    pushl %fs
+    pushl %gs
+    pushal
     pushl $0x00000000
+    movl %esp, %eax
+    addl $4, %eax
+    pushl %eax
     push $\irq
     call interrupt_handler
-    add $8, %esp
-    popa
+    addl $12, %esp
+    popal
+    popl %gs
+    popl %fs
+    popl %es
+    popl %ds
     iret
 .endm
 
+/* exceptions */
 ISR_NOERR 0
 ISR_NOERR 1
 ISR_NOERR 2
@@ -127,6 +141,7 @@ ISR_NOERR 29
 ISR_NOERR 30
 ISR_NOERR 31
 
+/* interrupts */
 IRQ_ENTRY 0, 32
 IRQ_ENTRY 1, 33
 IRQ_ENTRY 2, 34
@@ -143,6 +158,9 @@ IRQ_ENTRY 12, 44
 IRQ_ENTRY 13, 45
 IRQ_ENTRY 14, 46
 IRQ_ENTRY 15, 47
+
+/* syscall */
+IRQ_ENTRY 16, 48
 
 .global isr_stub_table
 isr_stub_table:
@@ -194,5 +212,6 @@ isr_stub_table:
     .long irq_stub_13
     .long irq_stub_14
     .long irq_stub_15
+    .long irq_stub_16
 
 .size _start, . - _start

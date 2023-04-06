@@ -3,7 +3,7 @@
 set -e
 TOOLCHAIN_PATH=~/opt/cross/bin/
 
-input_files=(
+kernel_input_files=(
     "kernel/kernel.c"
     "kernel/framebuffer.c"
     "kernel/gdt.c"
@@ -16,12 +16,15 @@ input_files=(
     "kernel/ps2.c"
     "kernel/ramdisk.c"
     "kernel/serial.c"
+    "kernel/syscall.c"
     "kernel/timer.c"
 
     "kernel/fatfs/diskio.c"
     "kernel/fatfs/ff.c"
     "kernel/fatfs/ffsystem.c"
     "kernel/fatfs/ffunicode.c"
+
+    "kernel/syscall/sys_draw_string.c"
 
     "libc/stdio/kprintf.c"
     "libc/stdio/printf.c"
@@ -41,7 +44,7 @@ input_files=(
     "libc/string/strchr.c"
 )
 
-output_files=(
+kernel_output_files=(
     "build/kernel/kernel.o"
     "build/kernel/framebuffer.o"
     "build/kernel/gdt.o"
@@ -54,12 +57,15 @@ output_files=(
     "build/kernel/ps2.o"
     "build/kernel/ramdisk.o"
     "build/kernel/serial.o"
+    "build/kernel/syscall.o"
     "build/kernel/timer.o"
 
     "build/kernel/fatfs/diskio.o"
     "build/kernel/fatfs/ff.o"
     "build/kernel/fatfs/ffsystem.o"
     "build/kernel/fatfs/ffunicode.o"
+
+    "build/kernel/syscall/sys_draw_string.o"
 
     "build/libc/stdio/kprintf.o"
     "build/libc/stdio/printf.o"
@@ -79,16 +85,17 @@ output_files=(
     "build/libc/string/strchr.o"
 )
 
-mkdir -p build/kernel/fatfs
+mkdir -p build/kernel/{fatfs,syscall}
 mkdir -p build/libc/{stdio,stdlib,string}
+mkdir -p build/user
 
 ${TOOLCHAIN_PATH}i686-elf-as kernel/boot.s -o build/kernel/boot.o
 
-for file in "${input_files[@]}"; do
+for file in "${kernel_input_files[@]}"; do
     ${TOOLCHAIN_PATH}i686-elf-gcc -c "$file" -o "build/${file%.*}.o" -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
 done
 
-${TOOLCHAIN_PATH}i686-elf-gcc -T kernel/linker.ld -o base_image/boot/fennecos.elf -ffreestanding -O2 -nostdlib build/kernel/boot.o "${output_files[@]}" -lgcc
+${TOOLCHAIN_PATH}i686-elf-gcc -T kernel/linker.ld -o base_image/boot/fennecos.elf -ffreestanding -O2 -nostdlib build/kernel/boot.o "${kernel_output_files[@]}" -lgcc
 nm base_image/boot/fennecos.elf -p | grep ' T \| t ' | awk '{ print $1" "$3 }' > base_image/boot/fennecos.sym
 
 sudo bash image.sh
