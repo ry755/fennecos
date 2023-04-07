@@ -27,12 +27,12 @@ void interrupt_handler(uint8_t irq, trap_frame_t *trap_frame, uint32_t error) {
         if (handler) {
             handler(irq, trap_frame, error);
         } else {
-            kprintf("unhandled interrupt! irq: %d, error: %x\n", irq, error);
+            kprintf("unhandled interrupt! irq: %d, error: 0x%x\n", irq, error);
         }
     }
     end_of_interrupt(irq);
 }
 
 void exception_handler(uint8_t irq, uint32_t error) {
-    kprintf("fatal exception! irq: %d, error: %x\n", irq, error);
+    kprintf("fatal exception! irq: %d, error: 0x%x\n", irq, error);
 }

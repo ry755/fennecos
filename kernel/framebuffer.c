@@ -1,12 +1,23 @@
 #include <kernel/framebuffer.h>
+#include <kernel/paging.h>
 
 #include <stdint.h>
 
 uint8_t font[FONT_WIDTH * FONT_HEIGHT * 256];
-uint32_t *framebuffer;
+uint32_t *framebuffer = (void *) 0xF0000000;
 
-void init_framebuffer(uint32_t framebuffer_address, uint32_t color) {
-    framebuffer = (void *)framebuffer_address;
+extern page_directory_t *kernel_page_directory;
+
+void init_framebuffer(uint32_t physical_framebuffer_address, uint32_t color) {
+    // map the framebuffer starting at 0xF0000000
+    uint32_t virtual_framebuffer_address = (uint32_t) framebuffer;
+    for (uint16_t i = 0; i < 300; i++) {
+        map_physical_to_virtual(kernel_page_directory, physical_framebuffer_address, virtual_framebuffer_address, true, true);
+        physical_framebuffer_address += 0x1000;
+        virtual_framebuffer_address += 0x1000;
+    }
+
+    // fill the framebuffer with the specified color
     for (uint32_t i = 0; i < 640*480; i++) {
         framebuffer[i] = color;
     }
