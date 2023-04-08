@@ -4,11 +4,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+extern uint32_t _kernel_end;
+extern page_directory_t *kernel_page_directory;
+
 block_header_t *free_list_head;
 bool allocator_initialized = false;
-uint32_t kalloc_before_init_ptr = 0x4000;
-
-extern page_directory_t *kernel_page_directory;
+uintptr_t kalloc_before_init_ptr = (uintptr_t) &_kernel_end;
 
 void init_allocator() {
     // FIXME: these values shouldn't be hardcoded
@@ -41,7 +42,7 @@ void *allocate(uint32_t size) {
             }
 
             block->size -= real_size;
-            block = (block_header_t *)((uint8_t *)block + block->size);
+            block = (block_header_t *) ((uint8_t *) block + block->size);
             block->size = real_size;
             return block + sizeof(block_header_t);
         }

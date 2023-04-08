@@ -62,6 +62,25 @@ flush_gdt:
 flush:
     ret
 
+.global switch_process
+switch_process:
+    movl 4(%esp), %eax
+    movl 8(%esp), %edx
+
+    pushl %ebp
+    pushl %ebx
+    pushl %esi
+    pushl %edi
+
+    movl %esp, (%eax)
+    movl %edx, %esp
+
+    popl %edi
+    popl %esi
+    popl %ebx
+    popl %ebp
+    ret
+
 .extern interrupt_handler
 .macro ISR_NOERR num
 .global isr_stub_\num

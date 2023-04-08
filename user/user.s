@@ -1,4 +1,6 @@
-.equ SYS_draw_string, 1
+
+.equ SYS_yield_process, 1
+.equ SYS_draw_string,   2
 
 .macro SYSC name
 .global \name
@@ -8,4 +10,5 @@
     ret
 .endm
 
+SYSC yield_process
 SYSC draw_string

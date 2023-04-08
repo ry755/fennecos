@@ -9,6 +9,7 @@
 #include <kernel/paging.h>
 #include <kernel/pic.h>
 #include <kernel/pit.h>
+#include <kernel/process.h>
 #include <kernel/ps2.h>
 #include <kernel/ramdisk.h>
 #include <kernel/serial.h>
@@ -22,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+extern page_directory_t *kernel_page_directory;
 extern uint8_t font[FONT_WIDTH * FONT_HEIGHT * 256];
 
 void kernel_main(multiboot_info_t *multiboot_struct) {
@@ -35,6 +37,8 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     init_idt();
     init_paging();
     init_allocator();
+    init_scheduler();
+    map_physical_to_virtual(kernel_page_directory, (uint32_t) multiboot_struct, (uint32_t) multiboot_struct, true, false);
     init_framebuffer(multiboot_struct->framebuffer_addr, 0xFF123456);
     //init_ramdisk();
 
@@ -78,31 +82,9 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
         kprintf("log file written short\n");
     f_close(&file_to_write);
 
-    page_directory_t *elf_page_directory = (page_directory_t *) kallocate(sizeof(page_directory_t), true, NULL);
-    memset(elf_page_directory, 0, sizeof(page_directory_t));
-    for (uint32_t i = 1; i < 0x01000000; i += 0x1000)
-        map_physical_to_virtual(elf_page_directory, i, i, true, true);
-    uint32_t v = 0xF0000000;
-    for (uint32_t i = multiboot_struct->framebuffer_addr; i < multiboot_struct->framebuffer_addr + 640*480*4; i += 0x1000) {
-        map_physical_to_virtual(elf_page_directory, i, v, true, true);
-        v += 0x1000;
-    }
-    FIL elf_file;
-    uint8_t elf_file_buffer[700] __attribute__ ((aligned (4096)));
-    map_physical_to_virtual(elf_page_directory, (uint32_t) &elf_file_buffer[0], 0x08048000, true, true);
-    switch_page_directory(elf_page_directory);
-    result = f_open(&elf_file, "1:/test.elf", FA_READ);
-    if (result != FR_OK) {
-        kprintf("failed to open 1:/test.elf\n");
-        kprintf("error: %d\n", result);
-        abort();
-    }
-    unsigned int elf_bytes_read;
-    f_read(&elf_file, &elf_file_buffer, 700, &elf_bytes_read);
-    if (elf_bytes_read != 700)
-        kprintf("binary file read short\n");
-    f_close(&elf_file);
-    execute_elf(&elf_file_buffer);
+    new_process("1:/test.elf", NULL);
+
+    scheduler();
 
     // unmount the hard disk
     kprintf("unmounting hard disk\n");

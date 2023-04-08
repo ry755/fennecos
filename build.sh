@@ -14,6 +14,7 @@ kernel_input_files=(
     "kernel/io.c"
     "kernel/isr.c"
     "kernel/paging.c"
+    "kernel/process.c"
     "kernel/pic.c"
     "kernel/pit.c"
     "kernel/ps2.c"
@@ -27,6 +28,7 @@ kernel_input_files=(
     "kernel/fatfs/ffsystem.c"
     "kernel/fatfs/ffunicode.c"
 
+    "kernel/syscall/sys_yield_process.c"
     "kernel/syscall/sys_draw_string.c"
 
     "libc/stdio/kprintf.c"
@@ -58,6 +60,7 @@ kernel_output_files=(
     "build/kernel/io.o"
     "build/kernel/isr.o"
     "build/kernel/paging.o"
+    "build/kernel/process.o"
     "build/kernel/pic.o"
     "build/kernel/pit.o"
     "build/kernel/ps2.o"
@@ -71,6 +74,7 @@ kernel_output_files=(
     "build/kernel/fatfs/ffsystem.o"
     "build/kernel/fatfs/ffunicode.o"
 
+    "build/kernel/syscall/sys_yield_process.o"
     "build/kernel/syscall/sys_draw_string.o"
 
     "build/libc/stdio/kprintf.o"

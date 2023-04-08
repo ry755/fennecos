@@ -1,5 +1,8 @@
 #pragma once
 
+#include <kernel/paging.h>
+#include <kernel/process.h>
+
 #include <stdint.h>
 
 #define ELF_MAGIC 0x464C457FU
@@ -12,7 +15,7 @@
 #define ELF32_ST_BIND(INFO) ((INFO) >> 4)
 #define ELF32_ST_TYPE(INFO) ((INFO) & 0x0F)
 
-void execute_elf(void *buffer);
+void parse_elf(page_directory_t *page_directory, process_context_t *process_context);
 
 typedef struct elf_main_header_s {
     uint32_t magic;

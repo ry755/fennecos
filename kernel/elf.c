@@ -2,11 +2,14 @@
 
 #include <kernel/allocator.h>
 #include <kernel/elf.h>
+#include <kernel/paging.h>
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
+extern page_directory_t *current_page_directory;
 
 static inline elf_section_header_t *elf_sheader(elf_main_header_t *header) {
     return (elf_section_header_t *) ((int) header + header->shoff);
@@ -163,11 +166,19 @@ static bool verify_elf(elf_main_header_t *header) {
     return true;
 }
 
-void execute_elf(void *buffer) {
-    elf_main_header_t *header = (elf_main_header_t *) buffer;
-    if (!verify_elf(header)) return;
+void parse_elf(page_directory_t *page_directory, process_context_t *process_context) {
+    page_directory_t *old_page_directory = current_page_directory;
+    switch_page_directory(page_directory);
+    elf_main_header_t *header = (elf_main_header_t *) 0x08048000;
+    if (!verify_elf(header)) {
+        switch_page_directory(old_page_directory);
+        return;
+    }
     load_elf_stage_1(header);
-    if (!load_elf_stage_2(header)) return;
+    if (!load_elf_stage_2(header)) {
+        switch_page_directory(old_page_directory);
+        return;
+    }
     kprintf("ELF header->entry: 0x%x\n", header->entry);
-    goto *((void *) header->entry);
+    process_context->eip = header->entry;
 }

@@ -5,21 +5,28 @@
 
 uint8_t font[FONT_WIDTH * FONT_HEIGHT * 256];
 uint32_t *framebuffer = (void *) 0xF0000000;
+uint32_t physical_framebuffer_address;
 
 extern page_directory_t *kernel_page_directory;
 
-void init_framebuffer(uint32_t physical_framebuffer_address, uint32_t color) {
+void init_framebuffer(uint32_t physical_address, uint32_t color) {
     // map the framebuffer starting at 0xF0000000
-    uint32_t virtual_framebuffer_address = (uint32_t) framebuffer;
-    for (uint16_t i = 0; i < 300; i++) {
-        map_physical_to_virtual(kernel_page_directory, physical_framebuffer_address, virtual_framebuffer_address, true, true);
-        physical_framebuffer_address += 0x1000;
-        virtual_framebuffer_address += 0x1000;
-    }
+    physical_framebuffer_address = physical_address;
+    map_framebuffer(kernel_page_directory);
 
     // fill the framebuffer with the specified color
     for (uint32_t i = 0; i < 640*480; i++) {
         framebuffer[i] = color;
+    }
+}
+
+void map_framebuffer(page_directory_t *page_directory) {
+    uint32_t virtual_address = (uint32_t) framebuffer;
+    uint32_t physical_address = physical_framebuffer_address;
+    for (uint16_t i = 0; i < 300; i++) {
+        map_physical_to_virtual(page_directory, physical_address, virtual_address, true, true);
+        physical_address += 0x1000;
+        virtual_address += 0x1000;
     }
 }
 
