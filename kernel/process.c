@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 
-process_context_t *scheduler_context; // switch_process() here to enter the scheduler
+process_context_t *scheduler_context;
 process_t *processes[MAX_PROCESSES] = { 0 };
 process_t *current_process = 0;
 
@@ -24,6 +24,13 @@ static uint32_t find_unused_process() {
     return (uint32_t) -1;
 }
 
+static void clean_up_process(uint32_t pid) {
+    // TODO: free process memory here
+    processes[pid]->state = UNUSED;
+    // TODO: kfree(processes[pid]);
+    processes[pid] = 0;
+}
+
 void init_scheduler() {
     scheduler_context = (process_context_t *) kallocate(sizeof(process_context_t), false, NULL);
 }
@@ -31,13 +38,14 @@ void init_scheduler() {
 void scheduler() {
     while (true) {
         for (uint8_t i = 0; i < MAX_PROCESSES; i++) {
-            if (!processes[i])
+            if (!processes[i]) continue;
+            if (processes[i]->state == DEAD) {
+                clean_up_process(i);
                 continue;
-            if (processes[i]->state != RUNNABLE)
-                continue;
+            }
+            if (processes[i]->state != RUNNABLE) continue;
 
             // mark the process as running and switch to it
-            kprintf("scheduler: switching context\n");
             current_process = processes[i];
             current_process->state = RUNNING;
             scheduler_context->eip = (uint32_t) &&ret;
@@ -46,10 +54,11 @@ void scheduler() {
             switch_process(&scheduler_context, current_process->context);
 ret:
             switch_page_directory(old_page_directory);
-            kprintf("scheduler: returned to scheduler\n");
 
             // once we reach this point, the process has switched back here
-            current_process->state = RUNNABLE;
+            // if the process is still alive, mark it as RUNNABLE
+            if (current_process->state != DEAD)
+                current_process->state = RUNNABLE;
             current_process = 0;
         }
     }
@@ -142,6 +151,12 @@ bool new_process(char path[], char *argv[]) {
     processes[new_pid] = process;
 
     return true;
+}
+
+void exit_process() {
+    kprintf("exiting process %d\n", current_process->pid);
+    current_process->state = DEAD;
+    yield_process();
 }
 
 void yield_process() {

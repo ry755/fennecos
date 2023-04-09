@@ -16,10 +16,11 @@ typedef struct process_context_s {
 } process_context_t;
 
 typedef enum process_state_e {
-    DEAD     = 0,
-    SLEEPING = 1,
-    RUNNABLE = 2,
-    RUNNING  = 3
+    UNUSED   = 0,
+    DEAD     = 1,
+    SLEEPING = 2,
+    RUNNABLE = 3,
+    RUNNING  = 4
 } process_state_t;
 
 typedef struct process_s {
@@ -33,5 +34,6 @@ typedef struct process_s {
 void init_scheduler();
 void scheduler();
 bool new_process(char path[], char *argv[]);
+void exit_process();
 void yield_process();
 void switch_process(process_context_t **old, process_context_t *new);

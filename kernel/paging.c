@@ -60,14 +60,14 @@ void init_paging() {
     map_kernel(kernel_page_directory);
     switch_page_directory(kernel_page_directory);
     uint32_t cr0;
-    __asm__ volatile("mov %%cr0, %0": "=r" (cr0));
+    asm volatile("mov %%cr0, %0": "=r" (cr0));
     cr0 |= 0x80000000;
-    __asm__ volatile("mov %0, %%cr0":: "r" (cr0));
+    asm volatile("mov %0, %%cr0":: "r" (cr0));
 }
 
 void switch_page_directory(page_directory_t *page_directory) {
     current_page_directory = page_directory;
-    __asm__ volatile("mov %0, %%cr3":: "r" (&page_directory->tables_physical));
+    asm volatile("mov %0, %%cr3":: "r" (&page_directory->tables_physical));
 }
 
 void map_kernel(page_directory_t *page_directory) {

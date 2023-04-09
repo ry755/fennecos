@@ -17,8 +17,8 @@ void init_idt() {
         idt_set_descriptor(vector, isr_stub_table[vector], 0x8E);
     }
 
-    __asm__ volatile ("lidt %0" :: "m" (idtr));
-    __asm__ volatile ("sti");
+    asm volatile ("lidt %0" :: "m" (idtr));
+    asm volatile ("sti");
 }
 
 void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags) {

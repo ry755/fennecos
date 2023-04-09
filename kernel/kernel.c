@@ -84,6 +84,7 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
 
     new_process("1:/test.elf", NULL);
 
+    kprintf("entering scheduler\n");
     scheduler();
 
     // unmount the hard disk

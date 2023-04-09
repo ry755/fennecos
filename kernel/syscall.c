@@ -5,10 +5,12 @@
 
 uint32_t current_syscall_esp;
 
+extern uint32_t sys_exit_process();
 extern uint32_t sys_yield_process();
 extern uint32_t sys_draw_string();
 
 static uint32_t (*syscalls[])(void) = {
+    [SYS_exit_process]  sys_exit_process,
     [SYS_yield_process] sys_yield_process,
     [SYS_draw_string]   sys_draw_string,
 };
