@@ -2,8 +2,6 @@
 
 #include <stdint.h>
 
-#define bochs_breakpoint() outw(0x8A00, 0x8A00); outw(0x8A00, 0x08AE0);
-
 void insl(int port, void *addr, int cnt);
 uint8_t inb(uint16_t port);
 uint8_t inw(uint16_t port);

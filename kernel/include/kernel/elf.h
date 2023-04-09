@@ -15,7 +15,7 @@
 #define ELF32_ST_BIND(INFO) ((INFO) >> 4)
 #define ELF32_ST_TYPE(INFO) ((INFO) & 0x0F)
 
-void parse_elf(page_directory_t *page_directory, process_context_t *process_context);
+uint32_t parse_elf(page_directory_t *page_directory, uint8_t *buffer);
 
 typedef struct elf_main_header_s {
     uint32_t magic;
@@ -47,6 +47,17 @@ typedef struct elf_section_header_s {
     uint32_t addralign;
     uint32_t entsize;
 } elf_section_header_t;
+
+typedef struct elf_program_header_s {
+    uint32_t type;
+    uint32_t offset;
+    uint32_t vaddr;
+    uint32_t paddr;
+    uint32_t filesz;
+    uint32_t memsz;
+    uint32_t flags;
+    uint32_t align;
+} elf_program_header_t;
 
 typedef struct elf_symbol_s {
     uint32_t name;
@@ -99,4 +110,9 @@ enum elf_symbol_types {
     STT_NOTYPE = 0, // no type
     STT_OBJECT = 1, // variables, arrays, etc.
     STT_FUNC   = 2  // functions
+};
+
+enum elf_pht_types {
+    PT_NULL = 0,
+    PT_LOAD = 1
 };

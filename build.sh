@@ -7,6 +7,7 @@ kernel_input_files=(
     "kernel/kernel.c"
     "kernel/allocator.c"
     "kernel/elf.c"
+    "kernel/event.c"
     "kernel/framebuffer.c"
     "kernel/gdt.c"
     "kernel/ide.c"
@@ -18,6 +19,7 @@ kernel_input_files=(
     "kernel/pic.c"
     "kernel/pit.c"
     "kernel/ps2.c"
+    "kernel/queue.c"
     "kernel/ramdisk.c"
     "kernel/serial.c"
     "kernel/syscall.c"
@@ -30,6 +32,8 @@ kernel_input_files=(
 
     "kernel/syscall/sys_exit_process.c"
     "kernel/syscall/sys_yield_process.c"
+    "kernel/syscall/sys_new_event.c"
+    "kernel/syscall/sys_get_next_event.c"
     "kernel/syscall/sys_draw_string.c"
 
     "libc/stdio/kprintf.c"
@@ -54,6 +58,7 @@ kernel_output_files=(
     "build/kernel/kernel.o"
     "build/kernel/allocator.o"
     "build/kernel/elf.o"
+    "build/kernel/event.o"
     "build/kernel/framebuffer.o"
     "build/kernel/gdt.o"
     "build/kernel/ide.o"
@@ -65,6 +70,7 @@ kernel_output_files=(
     "build/kernel/pic.o"
     "build/kernel/pit.o"
     "build/kernel/ps2.o"
+    "build/kernel/queue.o"
     "build/kernel/ramdisk.o"
     "build/kernel/serial.o"
     "build/kernel/syscall.o"
@@ -77,6 +83,8 @@ kernel_output_files=(
 
     "build/kernel/syscall/sys_exit_process.o"
     "build/kernel/syscall/sys_yield_process.o"
+    "build/kernel/syscall/sys_new_event.o"
+    "build/kernel/syscall/sys_get_next_event.o"
     "build/kernel/syscall/sys_draw_string.o"
 
     "build/libc/stdio/kprintf.o"

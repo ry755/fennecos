@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 
 typedef enum event_type_e {
@@ -19,8 +20,5 @@ typedef struct event_s {
     uint32_t arg7;
 } event_t;
 
-uint32_t exit_process();
-uint32_t yield_process();
-uint32_t new_event(event_t *event);
-uint32_t get_next_event(event_t *event);
-uint32_t draw_string(char *str, uint16_t x, uint16_t y, uint32_t foreground_color, uint32_t background_color);
+void new_event(event_t *event);
+bool get_next_event(event_t *event);

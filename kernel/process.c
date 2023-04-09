@@ -73,7 +73,6 @@ bool new_process(char path[], char *argv[]) {
 
     // open the file
     // TODO: use VFS once that is implemented
-    kprintf("new_process: opening file\n");
     FIL binary;
     FRESULT result = f_open(&binary, path, FA_READ);
     if (result != FR_OK) {
@@ -83,30 +82,22 @@ bool new_process(char path[], char *argv[]) {
     uint32_t binary_size = f_size(&binary);
 
     // create a new page directory for this process
-    kprintf("new_process: creating page directory\n");
     page_directory_t *process_page_directory = (page_directory_t *) kallocate(sizeof(page_directory_t), true, NULL);
     memset(process_page_directory, 0, sizeof(page_directory_t));
     map_kernel(process_page_directory);
     map_framebuffer(process_page_directory);
 
     // map enough consecutive pages starting at the ELF start address
-    kprintf("new_process: mapping binary buffer\n");
-    uint8_t *binary_buffer = (uint8_t *) map_consecutive_starting_at(process_page_directory, 0x08048000, (binary_size / 0x1000) + 1, true, true);
+    uint8_t *binary_buffer = (uint8_t *) kallocate(binary_size, false, NULL);
     if (!binary_buffer) {
-        kprintf("failed to map enough consecutive pages for new process: %s\n", path);
+        kprintf("failed to allocate buffer for new process: %s\n", path);
         // TODO: kfree process_page_directory here
         f_close(&binary);
         return false;
     }
-    kprintf("new_process: binary buffer mapped to 0x%x\n", binary_buffer);
-
-    // temporarily switch to the new process's  page directory so we can read the file
-    page_directory_t *old_page_directory = current_page_directory;
-    switch_page_directory(process_page_directory);
 
     // read the entire file into the buffer
     // TODO: use VFS once that is implemented
-    kprintf("new_process: reading file into buffer\n");
     unsigned int bytes_read;
     result = f_read(&binary, binary_buffer, binary_size, &bytes_read);
     if (result != FR_OK || bytes_read != binary_size) {
@@ -116,11 +107,7 @@ bool new_process(char path[], char *argv[]) {
         return false;
     }
 
-    // switch back to the old page directory
-    switch_page_directory(old_page_directory);
-
     // allocate memory for the process's state
-    kprintf("new_process: allocating for process\n");
     process_t *process = (process_t *) kallocate(sizeof(process_t), false, NULL);
     if (!process) {
         kprintf("failed to allocate memory for new process state: %s\n", path);
@@ -141,12 +128,18 @@ bool new_process(char path[], char *argv[]) {
     process_stack_pointer += 65536 - sizeof(process_context_t);
 
     // parse the ELF binary and set EIP
-    kprintf("new_process: parsing ELF\n");
-    parse_elf(process_page_directory, (process_context_t *) process_stack_pointer);
+    process->context = (process_context_t *) process_stack_pointer;
+    process->context->eip = parse_elf(process_page_directory, binary_buffer);
+    if (!process->context->eip) {
+        kprintf("failed to parse and prepare the ELF for new process: %s\n", path);
+        // TODO: kfree process_page_directory here
+        //       kfree process here
+        f_close(&binary);
+        return false;
+    }
 
     process->pid = new_pid;
     process->state = RUNNABLE;
-    process->context = (process_context_t *) process_stack_pointer;
     process->page_directory = process_page_directory;
     processes[new_pid] = process;
 

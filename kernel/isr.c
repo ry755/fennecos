@@ -40,7 +40,7 @@ void exception_handler(uint8_t irq, uint32_t error) {
             // page fault
             uint32_t virtual_address;
             asm volatile ("movl %%cr2, %0" : "=a"(virtual_address));
-            kprintf("page fault occurred while accessing virtual address 0x%x", virtual_address);
+            kprintf("page fault occurred while accessing virtual address 0x%x\n", virtual_address);
             break;
 
         default:

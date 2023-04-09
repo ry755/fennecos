@@ -4,6 +4,7 @@
 #include <kernel/elf.h>
 #include <kernel/paging.h>
 
+#include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -13,6 +14,10 @@ extern page_directory_t *current_page_directory;
 
 static inline elf_section_header_t *elf_sheader(elf_main_header_t *header) {
     return (elf_section_header_t *) ((int) header + header->shoff);
+}
+
+static inline elf_program_header_t *elf_pheader(elf_main_header_t *header) {
+    return (elf_program_header_t *) ((int) header + header->phoff);
 }
 
 static inline elf_section_header_t *elf_section(elf_main_header_t *header, uint32_t n) {
@@ -102,13 +107,13 @@ static bool relocate_elf_entry(elf_main_header_t *header, elf_relocation_t *rel,
     return true;
 }
 
-static void load_elf_stage_1(elf_main_header_t *header) {
+static bool load_elf_stage_1(page_directory_t *page_directory, elf_main_header_t *header) {
     elf_section_header_t *shdr = elf_sheader(header);
+    elf_program_header_t *phdr = elf_pheader(header);
 
     // iterate over section headers
     for (uint32_t i = 0; i < header->shnum; i++) {
         elf_section_header_t *section = &shdr[i];
-
         // if the section isn't present in the file
         if (section->type == SHT_NOBITS) {
             // skip if it the section is empty
@@ -116,7 +121,7 @@ static void load_elf_stage_1(elf_main_header_t *header) {
             // if the section should appear in memory
             if (section->flags & SHF_ALLOC) {
                 // allocate and zero some memory
-                void *mem = allocate(section->size);
+                void *mem = (void *) kallocate(section->size, false, NULL);
                 memset(mem, 0, section->size);
 
                 // assign the memory offset to the section offset
@@ -125,6 +130,33 @@ static void load_elf_stage_1(elf_main_header_t *header) {
             }
         }
     }
+
+    // iterate over program headers
+    for (uint32_t i = 0, offset = header->phoff; i < header->phnum; i++, offset += sizeof(elf_program_header_t)) {
+        elf_program_header_t *section = &phdr[i];
+        if (phdr->type != PT_LOAD)
+            continue;
+        if (phdr->memsz < phdr->filesz)
+            return false;
+        if (phdr->vaddr + phdr->memsz < phdr->vaddr)
+            return false;
+
+        // map pages at the required virtual addresses
+        kprintf("mapping %d pages starting at virtual address 0x%x for ELF program segment\n", (section->memsz / 0x1000) + 1, section->vaddr);
+        if (!map_consecutive_starting_at(page_directory, section->vaddr, (section->memsz / 0x1000) + 1, true, section->flags & 2)) {
+            kprintf("failed to map\n");
+            return false;
+        }
+
+        // flush the TLB
+        switch_page_directory(page_directory);
+
+        // finally, copy the data!
+        kprintf("copying %d bytes of program segment data from 0x%x to 0x%x\n", section->filesz, (uint8_t *) header + section->offset, section->vaddr);
+        memcpy((void *) section->vaddr, (uint8_t *) header + section->offset, section->filesz);
+    }
+
+    return true;
 }
 
 static bool load_elf_stage_2(elf_main_header_t *header) {
@@ -146,6 +178,7 @@ static bool load_elf_stage_2(elf_main_header_t *header) {
             }
         }
     }
+
     return true;
 }
 
@@ -166,19 +199,15 @@ static bool verify_elf(elf_main_header_t *header) {
     return true;
 }
 
-void parse_elf(page_directory_t *page_directory, process_context_t *process_context) {
+uint32_t parse_elf(page_directory_t *page_directory, uint8_t *buffer) {
+    elf_main_header_t *header = (elf_main_header_t *) buffer;
     page_directory_t *old_page_directory = current_page_directory;
     switch_page_directory(page_directory);
-    elf_main_header_t *header = (elf_main_header_t *) 0x08048000;
-    if (!verify_elf(header)) {
-        switch_page_directory(old_page_directory);
-        return;
-    }
-    load_elf_stage_1(header);
-    if (!load_elf_stage_2(header)) {
-        switch_page_directory(old_page_directory);
-        return;
-    }
+    if (!verify_elf(header)) return 0;
+    if (!load_elf_stage_1(page_directory, header)) return 0;
+    if (!load_elf_stage_2(header)) return 0;
     kprintf("ELF header->entry: 0x%x\n", header->entry);
-    process_context->eip = header->entry;
+    uint32_t entry = header->entry;
+    switch_page_directory(old_page_directory);
+    return entry;
 }
