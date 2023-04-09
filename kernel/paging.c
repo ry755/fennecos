@@ -118,7 +118,7 @@ uint32_t map_consecutive_starting_at(page_directory_t *page_directory, uint32_t 
     // check if there are enough consecutive unmapped pages after it
     for (uint32_t i = virtual_address; i < virtual_address + (pages_to_map * 0x1000); i += 0x1000) {
         page_t *page = get_page(i, false, page_directory);
-        if (page)
+        if (page && page->present)
             return 0;
     }
 
