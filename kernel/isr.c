@@ -36,12 +36,13 @@ void interrupt_handler(uint8_t irq, trap_frame_t *trap_frame, uint32_t error) {
 void exception_handler(uint8_t irq, uint32_t error) {
     kprintf("fatal exception! irq: %d, error: 0x%x\n", irq, error);
     switch (irq) {
-        case 14:
+        case 14: {
             // page fault
             uint32_t virtual_address;
             asm volatile ("movl %%cr2, %0" : "=a"(virtual_address));
             kprintf("page fault occurred while accessing virtual address 0x%x\n", virtual_address);
             break;
+        }
 
         default:
             break;
