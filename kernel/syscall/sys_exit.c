@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-uint32_t sys_yield_process() {
-    yield_process();
+uint32_t sys_exit() {
+    exit_process();
     return 0;
 }

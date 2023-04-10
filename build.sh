@@ -30,8 +30,8 @@ kernel_input_files=(
     "kernel/fatfs/ffsystem.c"
     "kernel/fatfs/ffunicode.c"
 
-    "kernel/syscall/sys_exit_process.c"
-    "kernel/syscall/sys_yield_process.c"
+    "kernel/syscall/sys_exit.c"
+    "kernel/syscall/sys_yield.c"
     "kernel/syscall/sys_new_event.c"
     "kernel/syscall/sys_get_next_event.c"
 
@@ -80,8 +80,8 @@ kernel_output_files=(
     "build/kernel/fatfs/ffsystem.o"
     "build/kernel/fatfs/ffunicode.o"
 
-    "build/kernel/syscall/sys_exit_process.o"
-    "build/kernel/syscall/sys_yield_process.o"
+    "build/kernel/syscall/sys_exit.o"
+    "build/kernel/syscall/sys_yield.o"
     "build/kernel/syscall/sys_new_event.o"
     "build/kernel/syscall/sys_get_next_event.o"
 

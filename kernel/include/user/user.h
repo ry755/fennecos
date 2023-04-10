@@ -23,7 +23,7 @@ typedef struct event_s {
 
 font_t *global_font = (void *) 0xFF000000;
 
-uint32_t exit_process();
-uint32_t yield_process();
+uint32_t exit();
+uint32_t yield();
 uint32_t new_event(event_t *event);
 uint32_t get_next_event(event_t *event);

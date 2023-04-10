@@ -2,8 +2,8 @@
 
 #include <stdint.h>
 
-#define SYS_exit_process   1
-#define SYS_yield_process  2
+#define SYS_exit           1
+#define SYS_yield          2
 #define SYS_new_event      3
 #define SYS_get_next_event 4
 

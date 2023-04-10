@@ -27,7 +27,7 @@ void _start() {
                     break;
             }
         }
-        yield_process();
+        yield();
     }
-    exit_process();
+    exit();
 }

@@ -5,14 +5,14 @@
 
 uint32_t current_syscall_esp;
 
-extern uint32_t sys_exit_process();
-extern uint32_t sys_yield_process();
+extern uint32_t sys_exit();
+extern uint32_t sys_yield();
 extern uint32_t sys_new_event();
 extern uint32_t sys_get_next_event();
 
 static uint32_t (*syscalls[])(void) = {
-    [SYS_exit_process]   sys_exit_process,
-    [SYS_yield_process]  sys_yield_process,
+    [SYS_exit]           sys_exit,
+    [SYS_yield]          sys_yield,
     [SYS_new_event]      sys_new_event,
     [SYS_get_next_event] sys_get_next_event,
 };
