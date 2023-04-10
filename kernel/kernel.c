@@ -24,7 +24,6 @@
 #include <string.h>
 
 extern page_directory_t *kernel_page_directory;
-extern uint8_t font[FONT_WIDTH * FONT_HEIGHT * 256];
 
 void kernel_main(multiboot_info_t *multiboot_struct) {
     init_gdt();
@@ -39,7 +38,6 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     init_allocator();
     init_scheduler();
     map_physical_to_virtual(kernel_page_directory, (uint32_t) multiboot_struct, (uint32_t) multiboot_struct, true, false);
-    init_framebuffer(multiboot_struct->framebuffer_addr, 0xFF123456);
     //init_ramdisk();
 
     // mount the hard disk
@@ -53,6 +51,7 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     }
 
     // open and read the font file
+    uint8_t font[8 * 16 * 256];
     FIL font_file;
     result = f_open(&font_file, "1:/res/font.bin", FA_READ);
     if (result != FR_OK) {
@@ -61,28 +60,13 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
         abort();
     }
     unsigned int font_bytes_read;
-    f_read(&font_file, &font, FONT_WIDTH * FONT_HEIGHT * 256, &font_bytes_read);
-    if (font_bytes_read != FONT_WIDTH * FONT_HEIGHT * 256)
+    f_read(&font_file, &font, 8 * 16 * 256, &font_bytes_read);
+    if (font_bytes_read != 8 * 16 * 256)
         kprintf("font file read short\n");
     f_close(&font_file);
+    init_framebuffer(multiboot_struct->framebuffer_addr, 0xFF123456, font, 8, 16);
 
-    draw_string("hello world!", 16, 16, 0xFFFFFFFF, 0xFF123456);
-
-    FIL file_to_write;
-    result = f_open(&file_to_write, "1:/hello.txt", FA_WRITE | FA_CREATE_NEW);
-    if (result != FR_OK) {
-        kprintf("failed to open 1:/hello.txt\n");
-        kprintf("error: %d\n", result);
-        abort();
-    }
-
-    unsigned int bytes_written;
-    f_write(&file_to_write, "hello world!!\nif you're seeing this then fatfs is working properly :3", 69, &bytes_written);
-    if (bytes_written != 69)
-        kprintf("log file written short\n");
-    f_close(&file_to_write);
-
-    new_process("1:/test.elf", NULL);
+    new_process("1:/bin/test.elf", NULL);
 
     kprintf("entering scheduler\n");
     scheduler();

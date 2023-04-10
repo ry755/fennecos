@@ -34,7 +34,6 @@ kernel_input_files=(
     "kernel/syscall/sys_yield_process.c"
     "kernel/syscall/sys_new_event.c"
     "kernel/syscall/sys_get_next_event.c"
-    "kernel/syscall/sys_draw_string.c"
 
     "libc/stdio/kprintf.c"
     "libc/stdio/printf.c"
@@ -85,7 +84,6 @@ kernel_output_files=(
     "build/kernel/syscall/sys_yield_process.o"
     "build/kernel/syscall/sys_new_event.o"
     "build/kernel/syscall/sys_get_next_event.o"
-    "build/kernel/syscall/sys_draw_string.o"
 
     "build/libc/stdio/kprintf.o"
     "build/libc/stdio/printf.o"
@@ -107,7 +105,9 @@ kernel_output_files=(
 
 mkdir -p build/kernel/{fatfs,syscall}
 mkdir -p build/libc/{stdio,stdlib,string}
-mkdir -p build/user
+mkdir -p build/user/bin
+
+mkdir -p base_image/bin
 
 # kernel
 ${TOOLCHAIN_PATH}i686-elf-as kernel/boot.s -o build/kernel/boot.o
@@ -118,8 +118,11 @@ ${TOOLCHAIN_PATH}i686-elf-gcc -T kernel/linker.ld -o base_image/boot/fennecos.el
 nm base_image/boot/fennecos.elf -p | grep ' T \| t ' | awk '{ print $1" "$3 }' > base_image/boot/fennecos.sym
 
 # user
+# this needs some major cleanup
 ${TOOLCHAIN_PATH}i686-elf-gcc -c user/user.s -o build/user/user.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
-${TOOLCHAIN_PATH}i686-elf-gcc -c user/test.c -o build/user/test.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
-${TOOLCHAIN_PATH}i686-elf-gcc -o base_image/test.elf -ffreestanding -O2 -nostdlib build/user/user.o build/user/test.o -lgcc
+${TOOLCHAIN_PATH}i686-elf-gcc -c user/framebuffer.c -o build/user/framebuffer.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
+${TOOLCHAIN_PATH}i686-elf-gcc -c user/keyboard.c -o build/user/keyboard.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
+${TOOLCHAIN_PATH}i686-elf-gcc -c user/bin/test.c -o build/user/bin/test.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
+${TOOLCHAIN_PATH}i686-elf-gcc -o base_image/bin/test.elf -ffreestanding -O2 -nostdlib build/user/user.o build/user/framebuffer.o build/user/keyboard.o build/user/bin/test.o -lgcc
 
 sudo bash image.sh

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <user/framebuffer.h>
+
 #include <stdint.h>
 
 typedef enum event_type_e {
@@ -19,8 +21,9 @@ typedef struct event_s {
     uint32_t arg7;
 } event_t;
 
+font_t *global_font = (void *) 0xFF000000;
+
 uint32_t exit_process();
 uint32_t yield_process();
 uint32_t new_event(event_t *event);
 uint32_t get_next_event(event_t *event);
-uint32_t draw_string(char *str, uint16_t x, uint16_t y, uint32_t foreground_color, uint32_t background_color);
