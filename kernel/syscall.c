@@ -7,12 +7,18 @@ uint32_t current_syscall_esp;
 
 extern uint32_t sys_exit();
 extern uint32_t sys_yield();
+extern uint32_t sys_open();
+extern uint32_t sys_read();
+extern uint32_t sys_write();
 extern uint32_t sys_new_event();
 extern uint32_t sys_get_next_event();
 
 static uint32_t (*syscalls[])(void) = {
     [SYS_exit]           sys_exit,
     [SYS_yield]          sys_yield,
+    [SYS_open]           sys_open,
+    [SYS_read]           sys_read,
+    [SYS_write]          sys_write,
     [SYS_new_event]      sys_new_event,
     [SYS_get_next_event] sys_get_next_event,
 };

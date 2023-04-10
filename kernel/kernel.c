@@ -74,7 +74,7 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     scheduler();
     kprintf("scheduler returned, all processes died?\n");
 
-    // unmount the hard disk
+    // unmount the hard disk and die if the scheduler returns
     kprintf("unmounting hard disk\n");
     result = f_unmount("1:");
     if (result != FR_OK) {

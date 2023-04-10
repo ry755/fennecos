@@ -24,6 +24,7 @@ kernel_input_files=(
     "kernel/serial.c"
     "kernel/syscall.c"
     "kernel/timer.c"
+    "kernel/vfs.c"
 
     "kernel/fatfs/diskio.c"
     "kernel/fatfs/ff.c"
@@ -32,6 +33,9 @@ kernel_input_files=(
 
     "kernel/syscall/sys_exit.c"
     "kernel/syscall/sys_yield.c"
+    "kernel/syscall/sys_open.c"
+    "kernel/syscall/sys_read.c"
+    "kernel/syscall/sys_write.c"
     "kernel/syscall/sys_new_event.c"
     "kernel/syscall/sys_get_next_event.c"
 
@@ -76,6 +80,7 @@ kernel_output_files=(
     "build/kernel/serial.o"
     "build/kernel/syscall.o"
     "build/kernel/timer.o"
+    "build/kernel/vfs.o"
 
     "build/kernel/fatfs/diskio.o"
     "build/kernel/fatfs/ff.o"
@@ -84,6 +89,9 @@ kernel_output_files=(
 
     "build/kernel/syscall/sys_exit.o"
     "build/kernel/syscall/sys_yield.o"
+    "build/kernel/syscall/sys_open.o"
+    "build/kernel/syscall/sys_read.o"
+    "build/kernel/syscall/sys_write.o"
     "build/kernel/syscall/sys_new_event.o"
     "build/kernel/syscall/sys_get_next_event.o"
 

@@ -2,6 +2,7 @@
 #include <kernel/elf.h>
 #include <kernel/framebuffer.h>
 #include <kernel/process.h>
+#include <kernel/vfs.h>
 
 #include <fatfs/ff.h>
 
@@ -144,6 +145,7 @@ bool new_process(char path[], char *argv[]) {
     process->pid = new_pid;
     process->state = RUNNABLE;
     process->page_directory = process_page_directory;
+    strcpy(process->current_directory, strip_last_path_component(path));
     processes[new_pid] = process;
 
     return true;

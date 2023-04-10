@@ -29,6 +29,7 @@ typedef struct process_s {
     process_state_t state;
     uint32_t pid;
     char name[16];
+    char current_directory[256];
 } process_t;
 
 void init_scheduler();
