@@ -151,6 +151,9 @@ static bool load_elf_stage_1(page_directory_t *page_directory, elf_main_header_t
         // flush the TLB
         switch_page_directory(page_directory);
 
+        // zero out memsz bytes
+        memset((void *) section->vaddr, 0, section->memsz);
+
         // finally, copy the data!
         kprintf("copying %d bytes of program segment data from 0x%x to 0x%x\n", section->filesz, (uint8_t *) header + section->offset, section->vaddr);
         memcpy((void *) section->vaddr, (uint8_t *) header + section->offset, section->filesz);
