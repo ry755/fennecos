@@ -52,6 +52,7 @@ kernel_input_files=(
     "libc/string/strlen.c"
     "libc/string/strchr.c"
     "libc/string/strcpy.c"
+    "libc/string/strcat.c"
 )
 
 kernel_output_files=(
@@ -103,6 +104,7 @@ kernel_output_files=(
     "build/libc/string/strlen.o"
     "build/libc/string/strchr.o"
     "build/libc/string/strcpy.o"
+    "build/libc/string/strcat.o"
 )
 
 mkdir -p build/kernel/{fatfs,syscall}
