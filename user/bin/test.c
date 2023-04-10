@@ -11,12 +11,14 @@ void _start() {
             switch (event.type) {
                 case KEY_DOWN:
                     draw_string("key down", 16, 32, 0xFFFFFFFF, 0xFF123456, global_font);
+                    keyboard_event(event.arg0);
                     draw_font_tile(scancode_to_ascii(event.arg0), 16, 48, 0xFFFFFFFF, 0xFF123456, global_font);
                     break;
 
                 case KEY_UP:
                     draw_string("key up  ", 16, 32, 0xFFFFFFFF, 0xFF123456, global_font);
-                    draw_font_tile(scancode_to_ascii(event.arg0), 16, 48, 0xFFFFFFFF, 0xFF123456, global_font);
+                    keyboard_event(event.arg0);
+                    draw_font_tile(scancode_to_ascii(event.arg0 & 0x7F), 16, 48, 0xFFFFFFFF, 0xFF123456, global_font);
                     break;
             }
         }

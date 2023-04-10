@@ -19,15 +19,8 @@ void ps2_keyboard_interrupt_handler(uint8_t irq, trap_frame_t *trap_frame, uint3
     if (!(status & 1))
         return;
     uint8_t scancode = inb(0x60);
-    if (!(scancode & 0x80)) {
-        event_t event;
-        event.type = KEY_DOWN;
-        event.arg0 = scancode;
-        new_event(&event);
-    } else {
-        event_t event;
-        event.type = KEY_UP;
-        event.arg0 = scancode & 0x7F;
-        new_event(&event);
-    }
+    event_t event;
+    event.type = scancode & 0x80 ? KEY_UP : KEY_DOWN;
+    event.arg0 = scancode;
+    new_event(&event);
 }
