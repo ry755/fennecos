@@ -36,9 +36,12 @@ void init_scheduler() {
 }
 
 void scheduler() {
-    while (true) {
+    bool flag;
+    do {
+        flag = false;
         for (uint8_t i = 0; i < MAX_PROCESSES; i++) {
             if (!processes[i]) continue;
+            flag = true;
             if (processes[i]->state == DEAD) {
                 clean_up_process(i);
                 continue;
@@ -61,7 +64,7 @@ ret:
                 current_process->state = RUNNABLE;
             current_process = 0;
         }
-    }
+    } while (flag);
 }
 
 bool new_process(char path[], char *argv[]) {

@@ -66,10 +66,13 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     f_close(&font_file);
     init_framebuffer(multiboot_struct->framebuffer_addr, 0xFF123456, font, 8, 16);
 
+    // run a test binary
     new_process("1:/bin/test.elf", NULL);
 
+    // enter the scheduler
     kprintf("entering scheduler\n");
     scheduler();
+    kprintf("scheduler returned, all processes died?\n");
 
     // unmount the hard disk
     kprintf("unmounting hard disk\n");
