@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+multiboot_info_t copied_multiboot_struct;
+
 extern page_directory_t *kernel_page_directory;
 
 void kernel_main(multiboot_info_t *multiboot_struct) {
@@ -34,10 +36,10 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     init_timer();
     init_ps2_keyboard();
     init_idt();
+    memcpy(&copied_multiboot_struct, multiboot_struct, sizeof(multiboot_info_t));
     init_paging();
     init_allocator();
     init_scheduler();
-    map_physical_to_virtual(kernel_page_directory, (uint32_t) multiboot_struct, (uint32_t) multiboot_struct, true, false);
     //init_ramdisk();
 
     // mount the hard disk
@@ -64,7 +66,9 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     if (font_bytes_read != 8 * 16 * 256)
         kprintf("font file read short\n");
     f_close(&font_file);
-    init_framebuffer(multiboot_struct->framebuffer_addr, 0xFF123456, font, 8, 16);
+
+    // initialize the framebuffer
+    init_framebuffer(copied_multiboot_struct.framebuffer_addr, copied_multiboot_struct.framebuffer_pitch, copied_multiboot_struct.framebuffer_bpp, 0xFF1E1E2E, font, 8, 16);
 
     // run a test binary
     new_process("1:/bin/test.elf", NULL);
