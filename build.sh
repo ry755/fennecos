@@ -122,11 +122,11 @@ kernel_output_files=(
 )
 
 user_input_files=(
-    "libc/stdio/kprintf.c"
     "libc/stdio/printf.c"
     "libc/stdio/putchar.c"
     "libc/stdio/puts.c"
     "libc/stdio/vprintf.c"
+    "libc/stdio/getchar.c"
 
     "libc/stdlib/abort.c"
     "libc/stdlib/itoa.c"
@@ -149,11 +149,11 @@ user_output_files=(
     "build/user/framebuffer.o"
     "build/user/keyboard.o"
 
-    "build/libc/stdio/kprintf.o"
     "build/libc/stdio/printf.o"
     "build/libc/stdio/putchar.o"
     "build/libc/stdio/puts.o"
     "build/libc/stdio/vprintf.o"
+    "build/libc/stdio/getchar.o"
 
     "build/libc/stdlib/abort.o"
     "build/libc/stdlib/itoa.o"

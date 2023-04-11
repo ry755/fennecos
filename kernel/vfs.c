@@ -23,6 +23,8 @@ static file_system_t get_filesystem(char *path) {
 
 static bool open_stream(file_t *file, char *path) {
     // TODO: implement this
+    (void) file;
+    (void) path;
     return false;
 }
 
