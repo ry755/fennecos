@@ -45,12 +45,12 @@ typedef struct file_s {
     void *stream_write_callback;
 } file_t;
 
-font_t *global_font = (void *) 0xFF000000;
-
 uint32_t exit();
 uint32_t yield();
-uint32_t open(file_t *file, char *path, uint32_t mode);
-uint32_t read(file_t *file, char *buffer, uint32_t bytes_to_read);
-uint32_t write(file_t *file, char *buffer, uint32_t bytes_to_write);
+uint32_t new_process(char path[], char *argv[]);
+uint32_t open(char *path, uint32_t mode);
+uint32_t close(uint32_t file_id);
+uint32_t read(uint32_t file_id, char *buffer, uint32_t bytes_to_read);
+uint32_t write(uint32_t file_id, char *buffer, uint32_t bytes_to_write);
 uint32_t new_event(event_t *event);
 uint32_t get_next_event(event_t *event);

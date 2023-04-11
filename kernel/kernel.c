@@ -70,8 +70,10 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     // initialize the framebuffer
     init_framebuffer(copied_multiboot_struct.framebuffer_addr, copied_multiboot_struct.framebuffer_pitch, copied_multiboot_struct.framebuffer_bpp, 0xFF1E1E2E, font, 8, 16);
 
-    // run a test binary
-    new_process("1:/bin/test.elf", NULL);
+    // run the console
+    file_t stdin_file = { .type = T_STREAM };
+    file_t stdout_file = { .type = T_STREAM };
+    new_process("1:/bin/console.elf", NULL, &stdin_file, &stdout_file);
 
     // enter the scheduler
     kprintf("entering scheduler\n");

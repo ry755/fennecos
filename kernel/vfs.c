@@ -21,13 +21,24 @@ static file_system_t get_filesystem(char *path) {
     }
 }
 
+static bool open_stream(file_t *file, char *path) {
+    // TODO: implement this
+    return false;
+}
+
+uint32_t get_unused_file_id() {
+    for (uint32_t i = 0; i < 16; i++)
+        if (!current_process->files[i])
+            return i;
+    return (uint32_t) -1;
+}
+
 bool open(file_t *file, char *path, uint8_t mode) {
     char full_path[256];
     if (*path == ':') {
         // this is a stream
-        // TODO: implment this
         file->type = T_STREAM;
-        return false;
+        return open_stream(file, path);
     }
     if (*(path + 1) != ':') {
         // this is not an absolute path
@@ -58,6 +69,22 @@ bool open(file_t *file, char *path, uint8_t mode) {
     }
 }
 
+bool close(file_t *file) {
+    switch (file->filesystem) {
+        case S_FAT: {
+            FRESULT result = f_close(&file->fatfs);
+            if (result != FR_OK)
+                return false;
+            return true;
+        }
+
+        default:
+        case S_UNKNOWN:
+            kprintf("vfs: attempted to close file on unknown filesystem\n");
+            return false;
+    }
+}
+
 uint32_t read(file_t *file, char *buffer, uint32_t bytes_to_read) {
     switch (file->type) {
         case T_FILE: {
@@ -76,7 +103,14 @@ uint32_t read(file_t *file, char *buffer, uint32_t bytes_to_read) {
         }
 
         case T_STREAM: {
-            // TODO: implement
+            for (uint32_t i = 0; i < bytes_to_read; i++) {
+                if (file->read_index >= BUFFER_SIZE) file->read_index = 0;
+                if (file->bytes_in_buffer == 0) return 0;
+                *(buffer + i) = file->stream_buffer[file->read_index];
+                file->stream_buffer[file->read_index] = 0;
+                file->read_index++;
+            }
+            return bytes_to_read;
         }
 
         default:
@@ -102,7 +136,14 @@ uint32_t write(file_t *file, char *buffer, uint32_t bytes_to_write) {
         }
 
         case T_STREAM: {
-            // TODO: implement
+            uint32_t bytes_written = 0;
+            for (uint32_t i = 0; i < bytes_to_write; i++) {
+                if (file->bytes_in_buffer >= BUFFER_SIZE) file->bytes_in_buffer = 0;
+                file->stream_buffer[file->bytes_in_buffer] = *(buffer + i);
+                file->bytes_in_buffer++;
+                bytes_written++;
+            }
+            return bytes_written;
         }
 
         default:

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <kernel/paging.h>
+#include <kernel/vfs.h>
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -28,13 +29,13 @@ typedef struct process_s {
     process_context_t *context;
     process_state_t state;
     uint32_t pid;
-    char name[16];
     char current_directory[256];
+    file_t *files[16];
 } process_t;
 
 void init_scheduler();
 void scheduler();
-bool new_process(char path[], char *argv[]);
+bool new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdout_file);
 void exit_process();
 void yield_process();
 void switch_process(process_context_t **old, process_context_t *new);

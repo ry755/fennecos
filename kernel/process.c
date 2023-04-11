@@ -68,7 +68,7 @@ ret:
     } while (flag);
 }
 
-bool new_process(char path[], char *argv[]) {
+bool new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdout_file) {
     uint32_t new_pid = find_unused_process();
     if (new_pid == (uint32_t) -1) {
         kprintf("max process limit reached, failed to create new process: %s\n", path);
@@ -76,14 +76,12 @@ bool new_process(char path[], char *argv[]) {
     }
 
     // open the file
-    // TODO: use VFS once that is implemented
-    FIL binary;
-    FRESULT result = f_open(&binary, path, FA_READ);
-    if (result != FR_OK) {
-        kprintf("failed to open file for new process: %s\nerror: %d\n", path, result);
+    file_t binary;
+    if (!open(&binary, path, MODE_READ)) {
+        kprintf("failed to open file for new process: %s\n", path);
         return false;
     }
-    uint32_t binary_size = f_size(&binary);
+    uint32_t binary_size = f_size(&binary.fatfs); // TODO: implement size getting function in the VFS
 
     // create a new page directory for this process
     page_directory_t *process_page_directory = (page_directory_t *) kallocate(sizeof(page_directory_t), true, NULL);
@@ -96,18 +94,16 @@ bool new_process(char path[], char *argv[]) {
     if (!binary_buffer) {
         kprintf("failed to allocate buffer for new process: %s\n", path);
         // TODO: kfree process_page_directory here
-        f_close(&binary);
+        close(&binary);
         return false;
     }
 
     // read the entire file into the buffer
-    // TODO: use VFS once that is implemented
-    unsigned int bytes_read;
-    result = f_read(&binary, binary_buffer, binary_size, &bytes_read);
-    if (result != FR_OK || bytes_read != binary_size) {
-        kprintf("failed to read file for new process: %s\nerror: %d\n", path, result);
+    uint32_t bytes_read = read(&binary, (char *) binary_buffer, binary_size);
+    if (bytes_read != binary_size) {
+        kprintf("failed to read file for new process: %s, error: %d\n", path);
         // TODO: kfree process_page_directory here
-        f_close(&binary);
+        close(&binary);
         return false;
     }
 
@@ -116,7 +112,7 @@ bool new_process(char path[], char *argv[]) {
     if (!process) {
         kprintf("failed to allocate memory for new process state: %s\n", path);
         // TODO: kfree process_page_directory here
-        f_close(&binary);
+        close(&binary);
         return false;
     }
     uint8_t *process_stack_pointer = (uint8_t *) kallocate(65536, false, NULL);
@@ -124,7 +120,7 @@ bool new_process(char path[], char *argv[]) {
         kprintf("failed to allocate memory for new process stack: %s\n", path);
         // TODO: kfree process_page_directory here
         //       kfree process here
-        f_close(&binary);
+        close(&binary);
         return false;
     }
 
@@ -138,16 +134,33 @@ bool new_process(char path[], char *argv[]) {
         kprintf("failed to parse and prepare the ELF for new process: %s\n", path);
         // TODO: kfree process_page_directory here
         //       kfree process here
-        f_close(&binary);
+        close(&binary);
         return false;
+    }
+
+    // push argument strings to the stack
+    uint32_t argc = 0;
+    if (argv) {
+        for (argc = 0; argv[argc]; argc++) {
+            // TODO: implement
+        }
     }
 
     process->pid = new_pid;
     process->state = RUNNABLE;
     process->page_directory = process_page_directory;
     strcpy(process->current_directory, strip_last_path_component(path));
-    processes[new_pid] = process;
 
+    // if there is a current process, make the new process inherit the current process's stdio streams
+    if (current_process) {
+        process->files[0] = current_process->files[0];
+        process->files[1] = current_process->files[1];
+    } else if (stdin_file || stdout_file) {
+        process->files[0] = stdin_file;
+        process->files[1] = stdout_file;
+    }
+
+    processes[new_pid] = process;
     return true;
 }
 
