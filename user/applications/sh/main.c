@@ -5,5 +5,10 @@
 
 void main() {
     printf("hello world!\n");
-    while (true) putchar(getchar());
+
+    char string[512];
+    while (true) {
+        gets(string);
+        printf("string = %s\n", string);
+    }
 }

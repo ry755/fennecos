@@ -127,8 +127,8 @@ user_input_files=(
     "libc/stdio/puts.c"
     "libc/stdio/vprintf.c"
     "libc/stdio/getchar.c"
+    "libc/stdio/gets.c"
 
-    "libc/stdlib/abort.c"
     "libc/stdlib/itoa.c"
     "libc/stdlib/utoa.c"
 
@@ -154,8 +154,8 @@ user_output_files=(
     "build/libc/stdio/puts.o"
     "build/libc/stdio/vprintf.o"
     "build/libc/stdio/getchar.o"
+    "build/libc/stdio/gets.o"
 
-    "build/libc/stdlib/abort.o"
     "build/libc/stdlib/itoa.o"
     "build/libc/stdlib/utoa.o"
 

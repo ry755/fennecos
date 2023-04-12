@@ -1,5 +1,7 @@
 #pragma once
 
+#include <kernel/queue.h>
+
 #include <fatfs/ff.h>
 
 #include <stdbool.h>
@@ -25,9 +27,8 @@ typedef struct file_s {
     file_type_t type;
     file_system_t filesystem;
     FIL fatfs;
-    uint8_t stream_buffer[BUFFER_SIZE];
-    uint8_t bytes_in_buffer;
-    uint8_t read_index;
+    queue_t stream_queue;
+    uint8_t stream_queue_data[BUFFER_SIZE];
 } file_t;
 
 uint32_t get_unused_file_id();

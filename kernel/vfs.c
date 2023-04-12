@@ -1,4 +1,5 @@
 #include <kernel/process.h>
+#include <kernel/queue.h>
 #include <kernel/vfs.h>
 
 #include <stdbool.h>
@@ -105,13 +106,8 @@ uint32_t read(file_t *file, char *buffer, uint32_t bytes_to_read) {
         }
 
         case T_STREAM: {
-            for (uint32_t i = 0; i < bytes_to_read; i++) {
-                if (file->read_index >= BUFFER_SIZE) file->read_index = 0;
-                if (file->bytes_in_buffer == 0) return 0;
-                *(buffer + i) = file->stream_buffer[file->read_index];
-                file->stream_buffer[file->read_index] = 0;
-                file->read_index++;
-            }
+            for (uint32_t i = 0; i < bytes_to_read; i++)
+                *(buffer + i) = read_queue(&file->stream_queue);
             return bytes_to_read;
         }
 
@@ -139,12 +135,9 @@ uint32_t write(file_t *file, char *buffer, uint32_t bytes_to_write) {
 
         case T_STREAM: {
             uint32_t bytes_written = 0;
-            for (uint32_t i = 0; i < bytes_to_write; i++) {
-                if (file->bytes_in_buffer >= BUFFER_SIZE) file->bytes_in_buffer = 0;
-                file->stream_buffer[file->bytes_in_buffer] = *(buffer + i);
-                file->bytes_in_buffer++;
-                bytes_written++;
-            }
+            for (uint32_t i = 0; i < bytes_to_write; i++)
+                if (write_queue(&file->stream_queue, *(buffer + i)))
+                    bytes_written++;
             return bytes_written;
         }
 

@@ -70,9 +70,21 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     // initialize the framebuffer
     init_framebuffer(copied_multiboot_struct.framebuffer_addr, copied_multiboot_struct.framebuffer_pitch, copied_multiboot_struct.framebuffer_bpp, 0xFF1E1E2E, font, 8, 16);
 
-    // run the console
-    file_t stdin_file = { .type = T_STREAM };
-    file_t stdout_file = { .type = T_STREAM };
+    // create stdin and stdout and run the console
+    file_t stdin_file = {
+        .type = T_STREAM,
+        .stream_queue.head = 0,
+        .stream_queue.tail = 0,
+        .stream_queue.size = BUFFER_SIZE,
+        .stream_queue.data = stdin_file.stream_queue_data
+    };
+    file_t stdout_file = {
+        .type = T_STREAM,
+        .stream_queue.head = 0,
+        .stream_queue.tail = 0,
+        .stream_queue.size = BUFFER_SIZE,
+        .stream_queue.data = stdout_file.stream_queue_data
+    };
     new_process("1:/bin/console.elf", NULL, &stdin_file, &stdout_file);
 
     // enter the scheduler

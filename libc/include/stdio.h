@@ -10,3 +10,4 @@ int vprintf(const char* __restrict, va_list);
 int putchar(int);
 int puts(const char*);
 int getchar();
+char *gets(char *str);
