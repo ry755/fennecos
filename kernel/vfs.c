@@ -29,6 +29,24 @@ static bool open_stream(file_t *file, char *path) {
     return false;
 }
 
+static bool open_file(file_t *file, char *path, uint8_t mode) {
+    // in this case, the VFS `mode` and FatFS `mode` are compatible
+    // so no translation is needed
+    FRESULT result = f_open(&file->fatfs, path, mode);
+    if (result != FR_OK)
+        return false;
+    file->type = T_FILE;
+    return true;
+}
+
+static bool open_dir(file_t *file, char *path) {
+    FRESULT result = f_opendir(&file->dir.fatfs, path);
+    if (result != FR_OK)
+        return false;
+    file->type = T_DIR;
+    return true;
+}
+
 uint32_t get_unused_file_id() {
     for (uint32_t i = 0; i < 16; i++)
         if (!current_process->files[i])
@@ -56,12 +74,11 @@ bool open(file_t *file, char *path, uint8_t mode) {
 
     switch (file->filesystem) {
         case S_FAT: {
-            // in this case, the VFS `mode` and FatFS `mode` are compatible
-            // so no translation is needed
-            FRESULT result = f_open(&file->fatfs, path, mode);
-            if (result != FR_OK)
-                return false;
-            file->type = T_FILE;
+            if (!open_file(file, path, mode)) {
+                if (!open_dir(file, path)) {
+                    return false;
+                }
+            }
             return true;
         }
 
@@ -75,10 +92,24 @@ bool open(file_t *file, char *path, uint8_t mode) {
 bool close(file_t *file) {
     switch (file->filesystem) {
         case S_FAT: {
-            FRESULT result = f_close(&file->fatfs);
-            if (result != FR_OK)
-                return false;
-            return true;
+            switch (file->type) {
+                case T_FILE: {
+                    FRESULT result = f_close(&file->fatfs);
+                    if (result != FR_OK)
+                        return false;
+                    return true;
+                }
+
+                case T_DIR: {
+                    FRESULT result = f_closedir(&file->dir.fatfs);
+                    if (result != FR_OK)
+                        return false;
+                    return true;
+                }
+
+                default:
+                    return false;
+            }
         }
 
         default:
@@ -111,6 +142,29 @@ uint32_t read(file_t *file, char *buffer, uint32_t bytes_to_read) {
             return bytes_to_read;
         }
 
+        case T_DIR: {
+            switch (file->filesystem) {
+                case S_FAT: {
+                    FILINFO info;
+                    directory_t dir_info;
+                    f_readdir(&file->dir.fatfs, &info);
+                    dir_info.size = info.fsize;
+                    strcpy(dir_info.name, info.fname);
+                    if (bytes_to_read >= sizeof(directory_t)) {
+                        memcpy(buffer, &dir_info, sizeof(directory_t));
+                        return sizeof(directory_t);
+                    } else {
+                        return 0;
+                    }
+                }
+
+                default:
+                case S_UNKNOWN:
+                    kprintf("vfs: attempted to read dir on unknown filesystem\n");
+                    return 0;
+            }
+        }
+
         default:
             return 0;
     }
@@ -141,9 +195,43 @@ uint32_t write(file_t *file, char *buffer, uint32_t bytes_to_write) {
             return bytes_written;
         }
 
+        case T_DIR: {
+            kprintf("vfs: attempted to write to directory\n");
+            return 0;
+        }
+
         default:
             return 0;
     }
+}
+
+// TODO: use the rest of the VFS once it is sufficiently capable
+bool chdir(char *path) {
+    DIR dir;
+    char new_path[256];
+
+    // FIXME: this sucks
+    if (!strcmp(path, "..")) {
+        strcpy(new_path, current_process->current_directory);
+        path = strip_last_path_component(new_path);
+    }
+
+    // FIXME: this sucks even more
+    if (f_opendir(&dir, path) != FR_OK) {
+        f_closedir(&dir);
+        strcpy(new_path, current_process->current_directory);
+        if (new_path[strlen(new_path) - 1] != '/')
+            strcat(new_path, "/");
+        strcat(new_path, path);
+        path = new_path;
+        if (f_opendir(&dir, path) != FR_OK)
+            return false;
+    }
+
+    strcpy(current_process->current_directory, path);
+
+    f_closedir(&dir);
+    return true;
 }
 
 char *strip_last_path_component(char *path) {
@@ -151,11 +239,10 @@ char *strip_last_path_component(char *path) {
     path += strlen(path) - 1;
     if (*path == '/')
         path--;
-    if (*path == ':') {
-        path++;
-        return path;
-    }
+    if (*path == ':')
+        return original_path;
     while (*path-- != '/');
+    path++;
     *++path = 0;
     return original_path;
 }

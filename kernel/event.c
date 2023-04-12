@@ -1,5 +1,6 @@
 #include <kernel/allocator.h>
 #include <kernel/event.h>
+#include <kernel/process.h>
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -26,8 +27,11 @@ static event_t read_event_queue(event_queue_t *queue) {
 }
 
 static bool write_event_queue(event_queue_t *queue, event_t data) {
-    if (((queue->head + 1) % queue->size) == queue->tail)
-        return false;
+    if (((queue->head + 1) % queue->size) == queue->tail) {
+        yield_process();
+        if (((queue->head + 1) % queue->size) == queue->tail)
+            return false;
+    }
     queue->data[queue->head] = data;
     queue->head = (queue->head + 1) % queue->size;
     return true;

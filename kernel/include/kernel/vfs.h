@@ -15,7 +15,8 @@
 
 typedef enum file_type_e {
     T_FILE   = 0,
-    T_STREAM = 1
+    T_STREAM = 1,
+    T_DIR    = 2
 } file_type_t;
 
 typedef enum file_system_e {
@@ -23,10 +24,17 @@ typedef enum file_system_e {
     S_FAT     = 1
 } file_system_t;
 
+typedef struct directory_s {
+    uint32_t size;
+    char name[256];
+    DIR fatfs;
+} directory_t;
+
 typedef struct file_s {
     file_type_t type;
     file_system_t filesystem;
     FIL fatfs;
+    directory_t dir;
     queue_t stream_queue;
     uint8_t stream_queue_data[BUFFER_SIZE];
 } file_t;
@@ -36,4 +44,5 @@ bool open(file_t *file, char *path, uint8_t mode);
 bool close(file_t *file);
 uint32_t read(file_t *file, char *buffer, uint32_t bytes_to_read);
 uint32_t write(file_t *file, char *buffer, uint32_t bytes_to_write);
+bool chdir(char *path);
 char *strip_last_path_component(char *path);

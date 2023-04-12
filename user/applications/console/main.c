@@ -253,13 +253,13 @@ void main() {
     char read_buffer[1];
     char write_buffer[64];
     uint32_t write_buffer_offset = 0;
-    char *string = "FennecOS console\nstarting sh.elf\n\n";
+    char *string = "FennecOS console\nstarting 1:/bin/sh.elf\n\n";
     while (*string) {
         print_character_to_console(*string);
         string++;
     }
-    if (!new_process("sh.elf", NULL)) {
-        string = "failed to create new process for sh.elf\n";
+    if (!new_process("1:/bin/sh.elf", NULL)) {
+        string = "failed to create new process for 1:/bin/sh.elf\n";
         while (*string) {
             print_character_to_console(*string);
             string++;
@@ -269,11 +269,13 @@ void main() {
 
     while (true) {
         // read from other processes' stdout
-        read_buffer[0] = 0;
-        if (read(1, read_buffer, 1) && read_buffer[0]) {
-            print_character_to_console(read_buffer[0]);
-            redraw_console_line();
+        // read 128 characters before yielding
+        for (uint8_t i = 0; i < 128; i++) {
+            read_buffer[0] = 0;
+            if (read(1, read_buffer, 1) && read_buffer[0])
+                print_character_to_console(read_buffer[0]);
         }
+        redraw_console_line();
 
         // write keyboard input to other processes' stdin
         if (get_next_event(&event)) {

@@ -12,6 +12,8 @@ extern uint32_t sys_open();
 extern uint32_t sys_close();
 extern uint32_t sys_read();
 extern uint32_t sys_write();
+extern uint32_t sys_cwd();
+extern uint32_t sys_chdir();
 extern uint32_t sys_new_event();
 extern uint32_t sys_get_next_event();
 
@@ -23,6 +25,8 @@ static uint32_t (*syscalls[])(void) = {
     [SYS_close]          sys_close,
     [SYS_read]           sys_read,
     [SYS_write]          sys_write,
+    [SYS_cwd]            sys_cwd,
+    [SYS_chdir]          sys_chdir,
     [SYS_new_event]      sys_new_event,
     [SYS_get_next_event] sys_get_next_event,
 };

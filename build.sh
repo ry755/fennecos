@@ -38,6 +38,8 @@ kernel_input_files=(
     "kernel/syscall/sys_close.c"
     "kernel/syscall/sys_read.c"
     "kernel/syscall/sys_write.c"
+    "kernel/syscall/sys_cwd.c"
+    "kernel/syscall/sys_chdir.c"
     "kernel/syscall/sys_new_event.c"
     "kernel/syscall/sys_get_next_event.c"
 
@@ -97,6 +99,8 @@ kernel_output_files=(
     "build/kernel/syscall/sys_close.o"
     "build/kernel/syscall/sys_read.o"
     "build/kernel/syscall/sys_write.o"
+    "build/kernel/syscall/sys_cwd.o"
+    "build/kernel/syscall/sys_chdir.o"
     "build/kernel/syscall/sys_new_event.o"
     "build/kernel/syscall/sys_get_next_event.o"
 
@@ -177,7 +181,7 @@ user_output_files=(
 mkdir -p build/kernel/{fatfs,syscall}
 mkdir -p build/libk/{stdio,stdlib,string}
 mkdir -p build/libc/{stdio,stdlib,string,fox}
-mkdir -p build/user/applications/{console,sh}
+mkdir -p build/user/applications/{console,demo,sh}
 
 mkdir -p base_image/bin
 
@@ -204,8 +208,13 @@ ${TOOLCHAIN_PATH}i686-elf-gcc -c user/keyboard.c -o build/user/keyboard.o -std=g
 ${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/console/main.c -o build/user/applications/console/main.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
 ${TOOLCHAIN_PATH}i686-elf-gcc -o base_image/bin/console.elf -ffreestanding -O2 -nostdlib "${user_output_files[@]}" build/user/applications/console/main.o -lgcc
 
+# demo
+${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/demo/main.c -o build/user/applications/demo/main.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
+${TOOLCHAIN_PATH}i686-elf-gcc -o base_image/bin/demo.elf -ffreestanding -O2 -nostdlib "${user_output_files[@]}" build/user/applications/demo/main.o -lgcc
+
 # sh
 ${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/sh/main.c -o build/user/applications/sh/main.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
-${TOOLCHAIN_PATH}i686-elf-gcc -o base_image/bin/sh.elf -ffreestanding -O2 -nostdlib "${user_output_files[@]}" build/user/applications/sh/main.o -lgcc
+${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/sh/commands/ls.c -o build/user/applications/sh/ls.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
+${TOOLCHAIN_PATH}i686-elf-gcc -o base_image/bin/sh.elf -ffreestanding -O2 -nostdlib "${user_output_files[@]}" build/user/applications/sh/main.o build/user/applications/sh/ls.o -lgcc
 
 sudo bash image.sh
