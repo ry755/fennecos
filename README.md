@@ -1,4 +1,4 @@
 # FennecOS
 
 ## Screenshot
-![screenshot](docs/screenshots/screenshot1.png)
+![screenshot](docs/screenshots/screenshot2.png)
