@@ -6,7 +6,6 @@ char *gets(char *str) {
         c = getchar();
         *str = c;
         str++;
-        putchar(c);
     } while (c != '\n');
     str--;
     *str = 0;

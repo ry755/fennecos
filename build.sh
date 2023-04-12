@@ -141,6 +141,8 @@ user_input_files=(
     "libc/string/strcpy.c"
     "libc/string/strcat.c"
     "libc/string/strcmp.c"
+
+    "libc/fox/string.c"
 )
 
 user_output_files=(
@@ -168,11 +170,13 @@ user_output_files=(
     "build/libc/string/strcpy.o"
     "build/libc/string/strcat.o"
     "build/libc/string/strcmp.o"
+
+    "build/libc/fox/string.o"
 )
 
 mkdir -p build/kernel/{fatfs,syscall}
 mkdir -p build/libk/{stdio,stdlib,string}
-mkdir -p build/libc/{stdio,stdlib,string}
+mkdir -p build/libc/{stdio,stdlib,string,fox}
 mkdir -p build/user/applications/{console,sh}
 
 mkdir -p base_image/bin

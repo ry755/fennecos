@@ -26,6 +26,7 @@ static uint8_t current_background_color_offset = DEFAULT_BACKGROUND_COLOR;
 static uint8_t escape_code_parameters[MAX_ESC_CODE_PARAMETERS];
 static uint8_t escape_code_parameter_count = 0;
 static bool is_in_escape_code = false;
+static bool is_in_line_mode = true;
 
 font_t *global_font = (void *) 0xFF000000;
 
@@ -249,7 +250,9 @@ void print_character_to_console(char character) {
 
 void main() {
     event_t event;
-    char buffer[1];
+    char read_buffer[1];
+    char write_buffer[64];
+    uint32_t write_buffer_offset = 0;
     char *string = "FennecOS console\nstarting sh.elf\n\n";
     while (*string) {
         print_character_to_console(*string);
@@ -266,17 +269,42 @@ void main() {
 
     while (true) {
         // read from other processes' stdout
-        buffer[0] = 0;
-        if (read(1, buffer, 1) && buffer[0]) {
-            print_character_to_console(buffer[0]);
+        read_buffer[0] = 0;
+        if (read(1, read_buffer, 1) && read_buffer[0]) {
+            print_character_to_console(read_buffer[0]);
             redraw_console_line();
         }
 
         // write keyboard input to other processes' stdin
         if (get_next_event(&event)) {
             if (event.type == KEY_DOWN) {
-                buffer[0] = scancode_to_ascii(event.arg0);
-                write(0, buffer, 1);
+                if (is_in_line_mode) {
+                    keyboard_event(event.arg0);
+                    char ascii = scancode_to_ascii(event.arg0);
+                    if (ascii != '\b'){
+                        write_buffer[write_buffer_offset++] = ascii;
+                        print_character_to_console(ascii);
+                    } else {
+                        print_character_to_console('\b');
+                        print_character_to_console(' ');
+                        print_character_to_console('\b');
+                        write_buffer_offset--;
+                    }
+                    redraw_console_line();
+                    if (write_buffer_offset >= 64) {
+                        write(0, write_buffer, write_buffer_offset);
+                        write_buffer_offset = 0;
+                    } else if (write_buffer[write_buffer_offset - 1] == '\n') {
+                        write(0, write_buffer, write_buffer_offset);
+                        write_buffer_offset = 0;
+                    }
+                } else {
+                    write_buffer[0] = scancode_to_ascii(event.arg0);
+                    if (write_buffer[0])
+                        write(0, write_buffer, 1);
+                }
+            } else if (event.type == KEY_UP) {
+                keyboard_event(event.arg0);
             }
         }
 
