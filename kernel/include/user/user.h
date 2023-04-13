@@ -34,6 +34,7 @@ typedef struct directory_s {
 
 uint32_t exit();
 uint32_t yield();
+uint32_t sleep(uint32_t ticks);
 uint32_t new_process(char path[], char *argv[]);
 uint32_t open(char *path, uint32_t mode);
 uint32_t close(uint32_t file_id);

@@ -31,6 +31,7 @@ typedef struct process_s {
     uint32_t pid;
     char current_directory[256];
     file_t *files[16];
+    uint32_t sleep_until;
 } process_t;
 
 void init_scheduler();
@@ -39,3 +40,4 @@ bool new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdout_f
 void exit_process();
 void yield_process();
 void switch_process(process_context_t **old, process_context_t *new);
+void sleep_process(uint32_t ticks);

@@ -33,6 +33,7 @@ kernel_input_files=(
 
     "kernel/syscall/sys_exit.c"
     "kernel/syscall/sys_yield.c"
+    "kernel/syscall/sys_sleep.c"
     "kernel/syscall/sys_new_process.c"
     "kernel/syscall/sys_open.c"
     "kernel/syscall/sys_close.c"
@@ -94,6 +95,7 @@ kernel_output_files=(
 
     "build/kernel/syscall/sys_exit.o"
     "build/kernel/syscall/sys_yield.o"
+    "build/kernel/syscall/sys_sleep.o"
     "build/kernel/syscall/sys_new_process.o"
     "build/kernel/syscall/sys_open.o"
     "build/kernel/syscall/sys_close.o"

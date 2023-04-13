@@ -2,6 +2,7 @@
 #include <kernel/elf.h>
 #include <kernel/framebuffer.h>
 #include <kernel/process.h>
+#include <kernel/timer.h>
 #include <kernel/vfs.h>
 
 #include <fatfs/ff.h>
@@ -47,6 +48,9 @@ void scheduler() {
                 clean_up_process(i);
                 continue;
             }
+            if (processes[i]->state == SLEEPING)
+                if (get_timer_value() >= processes[i]->sleep_until)
+                    processes[i]->state = RUNNABLE;
             if (processes[i]->state != RUNNABLE) continue;
 
             // mark the process as running and switch to it
@@ -172,4 +176,17 @@ void exit_process() {
 
 void yield_process() {
     switch_process(&current_process->context, scheduler_context);
+}
+
+void sleep_process(uint32_t ticks) {
+    uint32_t tick = get_timer_value();
+    if (current_process) {
+        // if there is a current process, make it sleep
+        current_process->sleep_until = tick + ticks;
+        current_process->state = SLEEPING;
+        yield_process();
+    } else {
+        // otherwise we're in the kernel, just delay. this is bad but whatever
+        while (get_timer_value() < tick + ticks);
+    }
 }
