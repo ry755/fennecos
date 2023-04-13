@@ -17,6 +17,9 @@ static file_system_t get_filesystem(char *path) {
         case '1':
             return S_FAT;
 
+        case '2':
+            return S_FAT;
+
         default:
             return S_UNKNOWN;
     }

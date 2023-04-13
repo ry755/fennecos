@@ -93,7 +93,7 @@ bool new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdout_f
     map_kernel(process_page_directory);
     map_framebuffer(process_page_directory);
 
-    // map enough consecutive pages starting at the ELF start address
+    // allocate a buffer to hold the file
     uint8_t *binary_buffer = (uint8_t *) kallocate(binary_size, false, NULL);
     if (!binary_buffer) {
         kprintf("failed to allocate buffer for new process: %s\n", path);
