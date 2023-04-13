@@ -1,5 +1,6 @@
 #include <kernel/allocator.h>
 #include <kernel/elf.h>
+#include <kernel/floppy.h>
 #include <kernel/framebuffer.h>
 #include <kernel/gdt.h>
 #include <kernel/ide.h>
@@ -40,16 +41,26 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     init_paging();
     init_allocator();
     init_scheduler();
+    init_floppy();
     //init_ramdisk();
 
     // mount the hard disk
     kprintf("mounting hard disk\n");
-    FATFS fs;
-    FRESULT result = f_mount(&fs, "1:", 1);
+    FATFS hard_disk;
+    FRESULT result = f_mount(&hard_disk, "1:", 1);
     if (result != FR_OK) {
         kprintf("failed to mount 1:\n");
         kprintf("error: %d\n", result);
         abort();
+    }
+
+    // mount the floppy disk
+    kprintf("mounting floppy disk\n");
+    FATFS floppy_disk;
+    result = f_mount(&floppy_disk, "2:", 1);
+    if (result != FR_OK) {
+        kprintf("failed to mount 2:\n");
+        kprintf("error: %d\n", result);
     }
 
     // open and read the font file

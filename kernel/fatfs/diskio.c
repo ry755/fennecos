@@ -10,12 +10,14 @@
 #include <fatfs/ff.h>		/* Obtains integer types */
 #include <fatfs/diskio.h>	/* Declarations of disk functions */
 
+#include <kernel/floppy.h>
 #include <kernel/ide.h>
 #include <kernel/ramdisk.h>
 
 /* Definitions of physical drive number for each drive */
-#define DEV_RAM 0
-#define DEV_IDE 1
+#define DEV_RAM    0
+#define DEV_IDE    1
+#define DEV_FLOPPY 2
 
 /*-----------------------------------------------------------------------*/
 /* Get Drive Status                                                      */
@@ -30,6 +32,9 @@ DSTATUS disk_status (
         return RES_OK;
 
     case DEV_IDE:
+        return RES_OK;
+
+    case DEV_FLOPPY:
         return RES_OK;
     }
 
@@ -52,6 +57,12 @@ DSTATUS disk_initialize (
 
     case DEV_IDE:
         return RES_OK;
+
+    case DEV_FLOPPY:
+        if (floppy_reset(FLOPPY_BASE))
+            return RES_OK;
+        else
+            return STA_NODISK;
     }
 
     return STA_NOINIT;
@@ -88,6 +99,17 @@ DRESULT disk_read (
 
         for (; count > 0; count--) {
             read_sector(buff, sector++);
+            buff += 512;
+        }
+
+        return RES_OK;
+
+    case DEV_FLOPPY:
+        if (!buff)
+            return RES_PARERR;
+
+        for (; count > 0; count--) {
+            floppy_read_sector(sector++, buff);
             buff += 512;
         }
 
@@ -134,6 +156,12 @@ DRESULT disk_write (
         }
 
         return RES_OK;
+
+    case DEV_FLOPPY:
+        if (!buff)
+            return RES_PARERR;
+
+        return RES_WRPRT;
     }
 
     return RES_PARERR;
