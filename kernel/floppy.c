@@ -38,11 +38,13 @@ volatile bool floppy_interrupt_occurred = false;
 uint8_t *floppy_dma_buffer = (void *) FLOPPY_DMA_BASE;
 static volatile uint32_t floppy_motor_ticks = 0;
 static volatile uint32_t floppy_motor_state = 0;
+static uint32_t cyl_in_buffer = 0xFFFFFFFF;
 
 extern page_directory_t *current_page_directory;
 extern page_directory_t *kernel_page_directory;
 
 static inline void wait_for_floppy_interrupt() {
+    asm volatile ("sti");
     while (!floppy_interrupt_occurred);
     floppy_interrupt_occurred = false;
 }
@@ -150,7 +152,7 @@ void floppy_motor_kill(int base) {
 }*/
 
 void floppy_write_cmd(uint32_t base, uint8_t cmd) {
-    for(uint16_t i = 0; i < 100; i++) {
+    for (uint16_t i = 0; i < 100; i++) {
         sleep_process(1); // sleep 10 ms
         if (inb(base + FLOPPY_MSR) & 0x80) {
             outb(base + FLOPPY_FIFO, cmd);
@@ -161,7 +163,7 @@ void floppy_write_cmd(uint32_t base, uint8_t cmd) {
 }
 
 uint8_t floppy_read_data(uint32_t base) {
-    for(uint16_t i = 0; i < 100; i++) {
+    for (uint16_t i = 0; i < 100; i++) {
         sleep_process(1); // sleep 10 ms
         if (inb(base + FLOPPY_MSR) & 0x80) {
             return inb(base + FLOPPY_FIFO);
@@ -214,13 +216,19 @@ uint32_t floppy_reset(uint32_t base) {
 
     wait_for_floppy_interrupt();
 
-    {
+    for (uint8_t i = 0; i < 4; i++) {
         uint32_t st0, cyl;
         floppy_check_interrupt(base, &st0, &cyl);
     }
 
     // set transfer speed 500kb/s
     outb(base + FLOPPY_CCR, 0x00);
+
+    // configure for implied seek on, FIFO on, drive polling mode off, threshold = 8, precompensation 0
+    floppy_write_cmd(base, CMD_CONFIGURE);
+    floppy_write_cmd(base, 0x00);
+    floppy_write_cmd(base, 0x57);
+    floppy_write_cmd(base, 0x00);
 
     //  - 1st byte is: bits[7:4] = steprate, bits[3:0] = head unload time
     //  - 2nd byte is: bits[7:1] = head load time, bit[0] = no-DMA
@@ -238,42 +246,9 @@ uint32_t floppy_reset(uint32_t base) {
     else return 0;
 }
 
-int32_t floppy_seek(uint32_t base, uint32_t cyli, uint32_t head) {
-    uint32_t st0, cyl = -1; // set to bogus cylinder
-
-    floppy_motor(base, floppy_motor_on);
-
-    for (uint32_t i = 0; i < 10; i++) {
-        // Attempt to position to given cylinder
-        // 1st byte bit[1:0] = drive, bit[2] = head
-        // 2nd byte is cylinder number
-        floppy_write_cmd(base, CMD_SEEK);
-        floppy_write_cmd(base, head << 2);
-        floppy_write_cmd(base, cyli);
-
-        wait_for_floppy_interrupt();
-        floppy_check_interrupt(base, &st0, &cyl);
-
-        if (st0 & 0xC0) {
-            static const char * status[] = { "normal", "error", "invalid", "drive" };
-            kprintf("floppy_seek: status = %s\n", status[st0 >> 6]);
-            continue;
-        }
-
-        if (cyl == cyli) {
-            floppy_motor(base, floppy_motor_off);
-            return 0;
-        }
-    }
-
-    kprintf("floppy_seek: 10 retries exhausted\n");
-    floppy_motor(base, floppy_motor_off);
-    return -1;
-}
-
 int32_t floppy_do_track(uint32_t base, uint32_t cyl, floppy_dir_t dir) {
     // transfer command, set below
-    unsigned char cmd;
+    uint8_t cmd;
 
     // Read is MT:MF:SK:0:0:1:1:0, write MT:MF:0:0:1:0:1
     // where MT = multitrack, MF = MFM mode, SK = skip deleted
@@ -294,16 +269,12 @@ int32_t floppy_do_track(uint32_t base, uint32_t cyl, floppy_dir_t dir) {
             return 0;
     }
 
-    // seek both heads
-    if (floppy_seek(base, cyl, 0)) return -1;
-    if (floppy_seek(base, cyl, 1)) return -1;
-
-    for (uint32_t i = 0; i < 20; i++) {
+    for (uint32_t i = 0; i < 10; i++) {
         floppy_motor(base, floppy_motor_on);
 
         floppy_dma_init(dir);
 
-        sleep_process(10); // give some time (100ms) to settle after the seeks
+        sleep_process(5); // give some time (50ms) to settle
 
         floppy_write_cmd(base, cmd);  // set above for current direction
         floppy_write_cmd(base, 0);    // 0:0:0:0:0:HD:US1:US0 = head and drive
@@ -315,8 +286,7 @@ int32_t floppy_do_track(uint32_t base, uint32_t cyl, floppy_dir_t dir) {
         floppy_write_cmd(base, 0x1B); // GAP3 length, 27 is default for 3.5"
         floppy_write_cmd(base, 0xFF); // data length (0xff if B/S != 0)
 
-        //wait_for_floppy_interrupt();
-        sleep_process(5);
+        wait_for_floppy_interrupt();
 
         // first read status information
         unsigned char st0, st1, st2, rcy, rhe, rse, bps;
@@ -359,7 +329,7 @@ int32_t floppy_do_track(uint32_t base, uint32_t cyl, floppy_dir_t dir) {
             kprintf("floppy_do_track: no data found\n");
             error = 1;
         }
-        if ((st1|st2) & 0x01) {
+        if ((st1 | st2) & 0x01) {
             kprintf("floppy_do_track: no address mark found\n");
             error = 1;
         }
@@ -384,7 +354,7 @@ int32_t floppy_do_track(uint32_t base, uint32_t cyl, floppy_dir_t dir) {
             error = 1;
         }
         if (bps != 0x2) {
-            kprintf("floppy_do_track: wanted 512B/sector, got %d", (1<<(bps+7)));
+            kprintf("floppy_do_track: wanted 512B/sector, got %d\n", (1<<(bps+7)));
             error = 1;
         }
         if (st1 & 0x02) {
@@ -403,7 +373,7 @@ int32_t floppy_do_track(uint32_t base, uint32_t cyl, floppy_dir_t dir) {
         }
     }
 
-    kprintf("floppy_do_track: 20 retries exhausted\n");
+    kprintf("floppy_do_track: 10 retries exhausted\n");
     floppy_motor(base, floppy_motor_off);
     return -1;
 }
@@ -422,8 +392,15 @@ bool floppy_read_sector(uint32_t sector, uint8_t *buffer) {
     uint16_t cyl_read;
     uint16_t head_read;
     uint16_t sector_read;
+    int32_t read_result = 0;
+
     lba_to_chs(sector, &cyl_read, &head_read, &sector_read);
-    int32_t read_result = floppy_read_track(FLOPPY_BASE, cyl_read);
+
+    // if write support is ever added, this will need a flag to
+    // determine when the buffer is in a dirty state
+    if (cyl_read != cyl_in_buffer)
+        read_result = floppy_read_track(FLOPPY_BASE, cyl_read);
+
     if (!read_result) {
         page_directory_t *old_page_directory = current_page_directory;
         switch_page_directory(kernel_page_directory);

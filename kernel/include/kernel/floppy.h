@@ -23,7 +23,8 @@ enum floppy_commands_e {
     CMD_READ_DATA = 6,
     CMD_RECALIBRATE = 7,
     CMD_SENSE_INTERRUPT = 8,
-    CMD_SEEK = 15
+    CMD_SEEK = 15,
+    CMD_CONFIGURE = 19
 };
 
 enum floppy_motor_e {
@@ -41,13 +42,11 @@ void init_floppy();
 void floppy_interrupt_handler(uint8_t irq, trap_frame_t *trap_frame, uint32_t error);
 void floppy_motor(uint32_t base, int onoff);
 void floppy_motor_kill(int base);
-void floppy_timer() ;
 void floppy_write_cmd(uint32_t base, uint8_t cmd);
 uint8_t floppy_read_data(uint32_t base);
 void floppy_check_interrupt(uint32_t base, uint32_t *st0, uint32_t *cyl);
 int32_t floppy_calibrate(uint32_t base);
 uint32_t floppy_reset(uint32_t base);
-int32_t floppy_seek(uint32_t base, uint32_t cyli, uint32_t head);
 int32_t floppy_do_track(uint32_t base, uint32_t cyl, floppy_dir_t dir);
 int32_t floppy_read_track(uint32_t base, uint32_t cyl);
 int32_t floppy_write_track(uint32_t base, uint32_t cyl);
