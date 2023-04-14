@@ -385,8 +385,6 @@ int32_t floppy_write_track(uint32_t base, uint32_t cyl) {
     return floppy_do_track(base, cyl, floppy_dir_write);
 }
 
-// TODO: keep track of which cyl is in the DMA buffer and only
-//       load new cyl if the requested sector is outside of that cyl
 bool floppy_read_sector(uint32_t sector, uint8_t *buffer) {
     uint16_t cyl_read;
     uint16_t head_read;
@@ -405,6 +403,7 @@ bool floppy_read_sector(uint32_t sector, uint8_t *buffer) {
         switch_page_directory(kernel_page_directory);
         memcpy(buffer, &floppy_dma_buffer[(sector % (18 * 2)) * 512], 512);
         switch_page_directory(old_page_directory);
+        cyl_in_buffer = cyl_read;
         return true;
     } else {
         return false;
