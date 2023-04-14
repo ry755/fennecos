@@ -208,6 +208,38 @@ uint32_t write(file_t *file, char *buffer, uint32_t bytes_to_write) {
     }
 }
 
+bool unlink(char *path) {
+    char full_path[256];
+    if (*path == ':') {
+        // this is a stream
+        return false;
+    }
+    if (*(path + 1) != ':') {
+        // this is not an absolute path
+        // we need to append it to the process's current directory
+        strcpy(full_path, current_process->current_directory);
+        strcat(full_path, "/");
+        strcat(full_path, path);
+        path = full_path;
+    }
+
+    file_system_t filesystem = get_filesystem(path);
+
+    switch (filesystem) {
+        case S_FAT: {
+            if (f_unlink(path) == FR_OK)
+                return true;
+            else
+                return false;
+        }
+
+        default:
+        case S_UNKNOWN:
+            kprintf("vfs: attempted to unlink file on unknown filesystem: %s\n", path);
+            return false;
+    }
+}
+
 // TODO: use the rest of the VFS once it is sufficiently capable
 bool chdir(char *path) {
     DIR dir;

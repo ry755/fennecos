@@ -8,5 +8,6 @@
 extern process_t *current_process;
 
 uint32_t sys_close() {
+    // TODO: kfree the file struct
     return close(current_process->files[fetch_syscall_u32(0)]);
 }
