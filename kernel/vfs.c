@@ -208,6 +208,7 @@ uint32_t write(file_t *file, char *buffer, uint32_t bytes_to_write) {
     }
 }
 
+// FIXME: f_unlink() always errors?
 bool unlink(char *path) {
     char full_path[256];
     if (*path == ':') {

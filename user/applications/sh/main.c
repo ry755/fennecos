@@ -66,6 +66,12 @@ static void run_command(char *buffer) {
         return;
     }
 
+    // rm
+    if (!strcmp(command.args[0], "rm")) {
+        rm((char *) command.args[1]);
+        return;
+    }
+
     // not an internal command? then try running it as a binary
     if (!new_process((char *) command.args[0], (char **) command.args)) {
         strcpy(concat_command, command.args[0]);
