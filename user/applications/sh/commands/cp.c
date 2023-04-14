@@ -33,6 +33,7 @@ void cp(char *source, char *destination) {
         write(destination_file, buffer, bytes_read);
         bytes_read_total += bytes_read;
         printf("bytes copied: %u\r", bytes_read_total);
+        yield();
     } while (bytes_read);
     putchar('\n');
 
