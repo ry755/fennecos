@@ -44,7 +44,6 @@ extern page_directory_t *current_page_directory;
 extern page_directory_t *kernel_page_directory;
 
 static inline void wait_for_floppy_interrupt() {
-    asm volatile ("sti");
     while (!floppy_interrupt_occurred);
     floppy_interrupt_occurred = false;
 }

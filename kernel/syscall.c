@@ -40,6 +40,7 @@ static uint32_t fetch_u32(uint32_t address) {
 }
 
 uint32_t syscall(uint32_t syscall, uint32_t esp) {
+    asm volatile ("sti");
     current_syscall_esp = esp;
     return syscalls[syscall]();
 }
