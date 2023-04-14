@@ -25,6 +25,7 @@
 #include <string.h>
 
 multiboot_info_t copied_multiboot_struct;
+uint8_t temporary_font[8 * 16 * 256];
 
 extern page_directory_t *kernel_page_directory;
 
@@ -64,7 +65,7 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     }
 
     // open and read the font file
-    uint8_t font[8 * 16 * 256];
+    //uint8_t font[8 * 16 * 256];
     FIL font_file;
     result = f_open(&font_file, "1:/res/font.bin", FA_READ);
     if (result != FR_OK) {
@@ -73,13 +74,18 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
         abort();
     }
     unsigned int font_bytes_read;
-    f_read(&font_file, &font, 8 * 16 * 256, &font_bytes_read);
+    f_read(&font_file, temporary_font, 8 * 16 * 256, &font_bytes_read);
     if (font_bytes_read != 8 * 16 * 256)
         kprintf("font file read short\n");
     f_close(&font_file);
 
     // initialize the framebuffer
-    init_framebuffer(copied_multiboot_struct.framebuffer_addr, copied_multiboot_struct.framebuffer_pitch, copied_multiboot_struct.framebuffer_bpp, 0xFF1E1E2E, font, 8, 16);
+    init_framebuffer(
+        copied_multiboot_struct.framebuffer_addr,
+        copied_multiboot_struct.framebuffer_pitch,
+        copied_multiboot_struct.framebuffer_bpp,
+        0xFF1E1E2E, temporary_font, 8, 16
+    );
 
     // create stdin and stdout and run the console
     file_t stdin_file = {
