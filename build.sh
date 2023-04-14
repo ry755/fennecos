@@ -192,9 +192,9 @@ mkdir -p base_image/bin
 # kernel
 ${TOOLCHAIN_PATH}i686-elf-as kernel/boot.s -o build/kernel/boot.o
 for file in "${kernel_input_files[@]}"; do
-    ${TOOLCHAIN_PATH}i686-elf-gcc -c "$file" -o "build/${file%.*}.o" -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibk/include/
+    ${TOOLCHAIN_PATH}i686-elf-gcc -c "$file" -o "build/${file%.*}.o" -g -std=gnu99 -ffreestanding -O0 -Wall -Wextra -Ikernel/include/ -Ilibk/include/
 done
-${TOOLCHAIN_PATH}i686-elf-gcc -T kernel/linker.ld -o base_image/boot/fennecos.elf -ffreestanding -O2 -nostdlib build/kernel/boot.o "${kernel_output_files[@]}" -lgcc
+${TOOLCHAIN_PATH}i686-elf-gcc -T kernel/linker.ld -o base_image/boot/fennecos.elf -ffreestanding -O0 -nostdlib build/kernel/boot.o "${kernel_output_files[@]}" -lgcc
 nm base_image/boot/fennecos.elf -p | grep ' T \| t ' | awk '{ print $1" "$3 }' > base_image/boot/fennecos.sym
 
 # user
