@@ -5,8 +5,8 @@
 #include <stdint.h>
 
 uint8_t *framebuffer = (void *) 0xF0000000;
-uint32_t *framebuffer_pitch = (void *) 0xF012C000;
-uint8_t *framebuffer_bpp = (void *) 0xF012C004;
+uint32_t *framebuffer_pitch = (void *) 0xF1000000;
+uint8_t *framebuffer_bpp = (void *) 0xF1000004;
 uint32_t physical_framebuffer_address;
 font_t *global_font = (void *) 0xFF000000;
 uint8_t global_font_bitmap_buffer[16 * 16 * 256] __attribute__((aligned (4096)));
@@ -23,7 +23,7 @@ void init_framebuffer(uint32_t physical_address, uint32_t pitch, uint8_t bpp, ui
     *framebuffer_bpp = bpp;
 
     // fill the framebuffer with the specified color
-    for (uint32_t i = 0; i < 640 * 480 * bpp / 8; i += bpp / 8) {
+    for (uint32_t i = 0; i < 1024 * 768 * bpp / 8; i += bpp / 8) {
         framebuffer[i] = color & 0xFF;
         framebuffer[i + 1] = (color >> 8) & 0xFF;
         framebuffer[i + 2] = (color >> 16) & 0xFF;
@@ -40,11 +40,12 @@ void init_framebuffer(uint32_t physical_address, uint32_t pitch, uint8_t bpp, ui
 void map_framebuffer(page_directory_t *page_directory) {
     uint32_t virtual_address = (uint32_t) framebuffer;
     uint32_t physical_address = physical_framebuffer_address;
-    for (uint16_t i = 0; i < 301; i++) {
+    for (uint16_t i = 0; i < 768; i++) {
         map_physical_to_virtual(page_directory, physical_address, virtual_address, true, true);
         physical_address += 0x1000;
         virtual_address += 0x1000;
     }
+    map_physical_to_virtual(page_directory, physical_address, 0xF1000000, true, true);
     map_physical_to_virtual(page_directory, (uint32_t) &global_font_buffer, (uint32_t) global_font, true, true);
     for (uint32_t i = 0; i < 16; i++)
         map_physical_to_virtual(page_directory, (uint32_t) &global_font_bitmap_buffer + (i * 0x1000), 0xFF100000 + (i * 0x1000), true, true);
