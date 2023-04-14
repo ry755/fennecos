@@ -54,6 +54,12 @@ static void run_command(char *buffer) {
         return;
     }
 
+    // cp
+    if (!strcmp(command.args[0], "cp")) {
+        cp((char *) command.args[1], (char *) command.args[2]);
+        return;
+    }
+
     // ls
     if (!strcmp(command.args[0], "ls")) {
         ls();

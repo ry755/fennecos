@@ -8,7 +8,7 @@
 
 #define MODE_READ   0x01
 #define MODE_WRITE  0x02
-#define MODE_CREATE 0x04
+#define MODE_CREATE 0x08
 
 typedef enum event_type_e {
     KEY_DOWN,
