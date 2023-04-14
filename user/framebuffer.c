@@ -3,8 +3,8 @@
 #include <stdint.h>
 
 uint8_t *framebuffer = (void *) 0xF0000000;
-uint32_t *framebuffer_pitch = (void *) 0xF012C000;
-uint8_t *framebuffer_bpp = (void *) 0xF012C004;
+uint32_t *framebuffer_pitch = (void *) 0xF1000000;
+uint8_t *framebuffer_bpp = (void *) 0xF1000004;
 
 void draw_font_tile(char tile, uint16_t x, uint16_t y, uint32_t foreground_color, uint32_t background_color, font_t *font) {
     uint8_t *font_ptr = &(font->font[font->width * font->height * tile]);
