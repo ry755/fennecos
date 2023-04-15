@@ -221,8 +221,9 @@ ${TOOLCHAIN_PATH}i686-elf-gcc -o base_image/bin/demo.elf -ffreestanding -O2 -nos
 # sh
 ${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/sh/main.c -o build/user/applications/sh/main.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
 ${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/sh/commands/cp.c -o build/user/applications/sh/cp.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
+${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/sh/commands/help.c -o build/user/applications/sh/help.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
 ${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/sh/commands/ls.c -o build/user/applications/sh/ls.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
 ${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/sh/commands/rm.c -o build/user/applications/sh/rm.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
-${TOOLCHAIN_PATH}i686-elf-gcc -o base_image/bin/sh.elf -ffreestanding -O2 -nostdlib "${user_output_files[@]}" build/user/applications/sh/main.o build/user/applications/sh/cp.o build/user/applications/sh/ls.o build/user/applications/sh/rm.o -lgcc
+${TOOLCHAIN_PATH}i686-elf-gcc -o base_image/bin/sh.elf -ffreestanding -O2 -nostdlib "${user_output_files[@]}" build/user/applications/sh/main.o build/user/applications/sh/cp.o build/user/applications/sh/help.o build/user/applications/sh/ls.o build/user/applications/sh/rm.o -lgcc
 
 sudo bash image.sh

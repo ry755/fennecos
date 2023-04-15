@@ -60,6 +60,12 @@ static void run_command(char *buffer) {
         return;
     }
 
+    // help
+    if (!strcmp(command.args[0], "help")) {
+        help();
+        return;
+    }
+
     // ls
     if (!strcmp(command.args[0], "ls")) {
         ls();
