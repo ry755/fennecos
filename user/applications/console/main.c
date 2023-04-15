@@ -31,15 +31,15 @@ static bool is_in_line_mode = true;
 font_t *global_font = (void *) 0xFF000000;
 
 static uint32_t colors[9] = {
-    0xFF1E1E2E, // black
-    0xFFF38BA8, // red
-    0xFFA6E3A1, // green
-    0xFFF9E2AF, // yellow
-    0xFF89B4FA, // blue
-    0xFFEBA0AC, // magenta
-    0xFF94E2D5, // cyan
-    0xFFCDD6F4, // white
-    0xFFCDD6F4  // default
+    0x1E1E2E, // black
+    0xF38BA8, // red
+    0xA6E3A1, // green
+    0xF9E2AF, // yellow
+    0x89B4FA, // blue
+    0xEBA0AC, // magenta
+    0x94E2D5, // cyan
+    0xCDD6F4, // white
+    0xCDD6F4  // default
 };
 
 void redraw_console() {
@@ -287,10 +287,12 @@ void main() {
                         write_buffer[write_buffer_offset++] = ascii;
                         print_character_to_console(ascii);
                     } else {
-                        print_character_to_console('\b');
-                        print_character_to_console(' ');
-                        print_character_to_console('\b');
-                        write_buffer_offset--;
+                        if (write_buffer_offset) {
+                            print_character_to_console('\b');
+                            print_character_to_console(' ');
+                            print_character_to_console('\b');
+                            write_buffer_offset--;
+                        }
                     }
                     redraw_console_line();
                     if (write_buffer_offset >= 64) {
