@@ -2,5 +2,5 @@
 
 set -e
 
-./build.sh
+zig build
 qemu-system-i386 -hda boot.img -serial stdio
