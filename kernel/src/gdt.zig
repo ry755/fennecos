@@ -9,19 +9,34 @@ const GdtEntry = packed struct {
     base_high: u8,
 };
 
-const GdtPtr = extern struct {
+const GdtPtr = packed struct {
     limit: u16,
-    base: u32,
+    base: *const GdtEntry,
 };
 
 var gdt: [GDT_ENTRIES]GdtEntry = undefined;
-export var gdt_ptr: GdtPtr = undefined;
+var gdt_ptr: GdtPtr = undefined;
 
-extern fn flush_gdt() void;
+fn flush_gdt() void {
+    asm volatile (
+        \\lgdt %[gdt_ptr]
+        \\mov $0x10, %ax
+        \\mov %ax, %ds
+        \\mov %ax, %es
+        \\mov %ax, %fs
+        \\mov %ax, %gs
+        \\mov %ax, %ss
+        \\jmp $0x08,$1f
+        \\1:
+        :
+        : [gdt_ptr] "*p" (&gdt_ptr),
+        : "ax", "memory"
+    );
+}
 
 pub fn initialize() void {
     gdt_ptr.limit = (@sizeOf(GdtEntry) * GDT_ENTRIES) - 1;
-    gdt_ptr.base = @ptrToInt(&gdt);
+    gdt_ptr.base = &gdt[0];
     // null segment
     set_entry(0, 0, 0, 0, 0);
     // code segment
@@ -33,11 +48,11 @@ pub fn initialize() void {
 
 pub fn set_entry(number: u8, base: u32, limit: u32, access: u8, flags: u8) void {
     // base address
-    gdt[number].base_low = @truncate(u16, base & 0xFFFF);
+    gdt[number].base_low = @truncate(u16, base);
     gdt[number].base_middle = @truncate(u8, (base >> 16) & 0xFF);
     gdt[number].base_high = @truncate(u8, (base >> 24) & 0xFF);
     // limits
-    gdt[number].limit_low = @truncate(u16, limit & 0xFFFF);
+    gdt[number].limit_low = @truncate(u16, limit);
     gdt[number].flags = @truncate(u8, (limit >> 16) & 0x0F);
     // flags
     gdt[number].flags |= (flags << 4) & 0xF0;
