@@ -1,4 +1,8 @@
+const std = @import("std");
 const io = @import("io.zig");
+
+const Writer = std.io.Writer(@TypeOf(.{}), error{}, write_string);
+pub const writer = Writer{ .context = .{} };
 
 const COM1_PORT = 0x03F8;
 
@@ -28,7 +32,11 @@ pub fn write(character: u8) void {
     io.outb(COM1_PORT, character);
 }
 
-pub fn write_string(string: []const u8) void {
-    for (string) |char|
+pub fn write_string(_: @TypeOf(.{}), string: []const u8) error{}!usize {
+    var written: usize = 0;
+    for (string) |char| {
         write(char);
+        written += 1;
+    }
+    return written;
 }
