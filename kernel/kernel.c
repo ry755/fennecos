@@ -43,7 +43,6 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     init_allocator();
     init_scheduler();
     init_floppy();
-    //init_ramdisk();
 
     // mount the hard disk
     kprintf("mounting hard disk\n");
@@ -55,6 +54,10 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
         abort();
     }
 
+    // initialize the ramdisk
+    FATFS ram_disk;
+    init_ramdisk(&ram_disk, "1:/res/ramdisk.img");
+
     // mount the floppy disk
     kprintf("mounting floppy disk\n");
     FATFS floppy_disk;
@@ -65,7 +68,6 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     }
 
     // open and read the font file
-    //uint8_t font[8 * 16 * 256];
     FIL font_file;
     result = f_open(&font_file, "1:/res/font.bin", FA_READ);
     if (result != FR_OK) {
@@ -84,7 +86,7 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
         copied_multiboot_struct.framebuffer_addr,
         copied_multiboot_struct.framebuffer_pitch,
         copied_multiboot_struct.framebuffer_bpp,
-        0xFF1E1E2E, temporary_font, 8, 16
+        0x1E1E2E, temporary_font, 8, 16
     );
 
     // create stdin and stdout and run the console

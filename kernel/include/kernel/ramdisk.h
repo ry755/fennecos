@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-#define RAMDISK_SIZE 131072
+#define RAMDISK_SIZE 8388608
 
 void init_ramdisk();
 void read_ramdisk_sector(void *destination, uint32_t sector);

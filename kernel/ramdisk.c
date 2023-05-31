@@ -9,23 +9,28 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <kernel/ramdisk_mbr.h>
+uint8_t ramdisk[RAMDISK_SIZE];
 
-uint8_t ramdisk_mkfs_work[512];
-MKFS_PARM ramdisk_mkfs_parm = {
-    .fmt = FM_FAT32,
-    .n_fat = 2,
-    .align = 0,
-    .n_root = 0,
-    .au_size = 0
-};
+void init_ramdisk(FATFS *disk, char image_path[]) {
+    kprintf("mounting ramdisk\n");
 
-void init_ramdisk() {
-    FRESULT result = f_mkfs("0:", &ramdisk_mkfs_parm, ramdisk_mkfs_work, 512);
+    FIL ramdisk_file;
+    FRESULT result = f_open(&ramdisk_file, image_path, FA_READ);
     if (result != FR_OK) {
-        kprintf("failed to format 0:\n");
+        kprintf("failed to open %s\n", image_path);
         kprintf("error: %d\n", result);
-        abort();
+        return;
+    }
+
+    unsigned int bytes_read;
+    f_read(&ramdisk_file, ramdisk, RAMDISK_SIZE, &bytes_read);
+    if (bytes_read != RAMDISK_SIZE)
+        kprintf("ramdisk image read short\n");
+
+    result = f_mount(disk, "0:", 1);
+    if (result != FR_OK) {
+        kprintf("failed to mount 0:\n");
+        kprintf("error: %d\n", result);
     }
 }
 
