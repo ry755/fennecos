@@ -15,7 +15,7 @@ fi
 image=boot.img
 
 rm -f $image
-fallocate -l 64M $image
+fallocate -l 128M $image
 echo -e "o\nn\n\n\n\n\nw\n" | fdisk $image
 loop_device="$(losetup -P --show -f $image)"
 loop_part=${loop_device}p1
