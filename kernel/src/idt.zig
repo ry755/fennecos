@@ -34,9 +34,9 @@ pub fn initialize() void {
 
 pub fn set_descriptor(vector: usize, isr: *void, flags: u8) void {
     const descriptor = &idt[vector];
-    descriptor.isr_low = @truncate(u16, @ptrToInt(isr) & 0xFFFF);
+    descriptor.isr_low = @truncate(@intFromPtr(isr) & 0xFFFF);
     descriptor.kernel_cs = 0x08;
     descriptor.attributes = flags;
-    descriptor.isr_high = @truncate(u16, @ptrToInt(isr) >> 16);
+    descriptor.isr_high = @truncate(@intFromPtr(isr) >> 16);
     descriptor.reserved = 0;
 }

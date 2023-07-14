@@ -12,12 +12,12 @@ pub fn build(b: *Builder) !void {
     // disable CPU features that require additional initialization
     // like MMX, SSE/2 and AVX. that requires us to enable the soft-float feature
     const Features = std.Target.x86.Feature;
-    target.cpu_features_sub.addFeature(@enumToInt(Features.mmx));
-    target.cpu_features_sub.addFeature(@enumToInt(Features.sse));
-    target.cpu_features_sub.addFeature(@enumToInt(Features.sse2));
-    target.cpu_features_sub.addFeature(@enumToInt(Features.avx));
-    target.cpu_features_sub.addFeature(@enumToInt(Features.avx2));
-    target.cpu_features_add.addFeature(@enumToInt(Features.soft_float));
+    target.cpu_features_sub.addFeature(@intFromEnum(Features.mmx));
+    target.cpu_features_sub.addFeature(@intFromEnum(Features.sse));
+    target.cpu_features_sub.addFeature(@intFromEnum(Features.sse2));
+    target.cpu_features_sub.addFeature(@intFromEnum(Features.avx));
+    target.cpu_features_sub.addFeature(@intFromEnum(Features.avx2));
+    target.cpu_features_add.addFeature(@intFromEnum(Features.soft_float));
 
     // build the kernel itself
     const optimize = b.standardOptimizeOption(.{});

@@ -48,12 +48,12 @@ pub fn initialize() void {
 
 pub fn set_entry(number: u8, base: u32, limit: u32, access: u8, flags: u8) void {
     // base address
-    gdt[number].base_low = @truncate(u16, base);
-    gdt[number].base_middle = @truncate(u8, (base >> 16) & 0xFF);
-    gdt[number].base_high = @truncate(u8, (base >> 24) & 0xFF);
+    gdt[number].base_low = @truncate(base);
+    gdt[number].base_middle = @truncate((base >> 16) & 0xFF);
+    gdt[number].base_high = @truncate((base >> 24) & 0xFF);
     // limits
-    gdt[number].limit_low = @truncate(u16, limit);
-    gdt[number].flags = @truncate(u8, (limit >> 16) & 0x0F);
+    gdt[number].limit_low = @truncate(limit);
+    gdt[number].flags = @truncate((limit >> 16) & 0x0F);
     // flags
     gdt[number].flags |= (flags << 4) & 0xF0;
     // access byte
