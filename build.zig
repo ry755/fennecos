@@ -1,5 +1,6 @@
 const std = @import("std");
 const Builder = std.build.Builder;
+const LazyPath = std.build.LazyPath;
 
 pub fn build(b: *Builder) !void {
     // define a freestanding x86 cross-compilation target
@@ -29,7 +30,8 @@ pub fn build(b: *Builder) !void {
     });
     kernel.code_model = .kernel;
     kernel.setLinkerScriptPath(.{ .path = "kernel/linker.ld" });
-    kernel.addAssemblyFile("kernel/src/boot.s");
-    kernel.override_dest_dir = .{ .custom = "../base_image/boot/" };
-    b.installArtifact(kernel);
+    kernel.addAssemblyFile(LazyPath.relative("kernel/src/boot.s"));
+    b.getInstallStep().dependOn(&b.addInstallArtifact(kernel, .{
+        .dest_dir = .{ .override = .{ .custom = "../base_image/boot/" } },
+    }).step);
 }
