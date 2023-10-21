@@ -1,5 +1,8 @@
 const std = @import("std");
 
+const Writer = std.io.Writer(@TypeOf(.{}), error{}, draw_string_writer);
+pub const writer = Writer{ .context = .{} };
+
 pub const Font = struct { data: []const u8, width: u8, height: u8 };
 pub const default_font = Font{ .data = @embedFile("font.bin")[0..], .width = 8, .height = 16 };
 pub const Point = struct { x: u32, y: u32 };
@@ -98,8 +101,8 @@ pub fn draw_font_tile(tile: u8, x: u32, y: u32, foreground_color: u32, backgroun
     const font_offset: u32 = @as(u32, font.*.width) * @as(u32, font.*.height) * @as(u32, tile);
     const font_data = font.*.data.ptr + font_offset;
 
-    for (0..font.height) |y_counter| {
-        for (0..font.width) |x_counter| {
+    for (0..font.*.height) |y_counter| {
+        for (0..font.*.width) |x_counter| {
             const font_byte = font_data[y_counter * font.*.width + x_counter];
             const framebuffer_offset = (y + y_counter) * current_framebuffer.*.pitch + ((x + x_counter) * (current_framebuffer.*.bpp / 8));
             if (font_byte != 0) {
@@ -212,4 +215,9 @@ fn blit_framebuffer_into_framebuffer(source: *Framebuffer, target: *Framebuffer)
     source.*.dirty.y1 = 0;
     source.*.dirty.x2 = 0;
     source.*.dirty.y2 = 0;
+}
+
+fn draw_string_writer(_: @TypeOf(.{}), string: []const u8) error{}!usize {
+    draw_string(string);
+    return string.len;
 }
