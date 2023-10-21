@@ -19,7 +19,7 @@ pub const Framebuffer = struct {
 
 var hw_framebuffer = Framebuffer{
     .next = null,
-    .child = &buffered_hw_framebuffer,
+    .child = &main_framebuffer,
     .data = undefined,
     .x = 0,
     .y = 0,
@@ -30,11 +30,11 @@ var hw_framebuffer = Framebuffer{
     .dirty = Rectangle{ .x1 = 0, .y1 = 0, .x2 = 0, .y2 = 0 },
 };
 
-var buffered_hw_framebuffer_data = std.mem.zeroes([640 * 480 * 4]u8);
-pub var buffered_hw_framebuffer = Framebuffer{
+var main_framebuffer_data = std.mem.zeroes([640 * 480 * 4]u8);
+pub var main_framebuffer = Framebuffer{
     .next = null,
     .child = null,
-    .data = &buffered_hw_framebuffer_data,
+    .data = &main_framebuffer_data,
     .x = 0,
     .y = 0,
     .width = 640,
@@ -52,19 +52,19 @@ pub fn initialize(address: u32, pitch: u32, bpp: u8, color: u32) void {
     hw_framebuffer.data = @ptrFromInt(address);
     hw_framebuffer.bpp = bpp;
     hw_framebuffer.pitch = pitch;
-    current_framebuffer = &buffered_hw_framebuffer;
+    current_framebuffer = &main_framebuffer;
     current_font = @constCast(&default_font);
 
     // fill the framebuffer with the specified color
     var i: u32 = 0;
     while (i < @as(u32, 640) * @as(u32, 480) * bpp / 8) {
-        buffered_hw_framebuffer.data[i] = @truncate(color & 0xFF);
-        buffered_hw_framebuffer.data[i + 1] = @truncate((color >> 8) & 0xFF);
-        buffered_hw_framebuffer.data[i + 2] = @truncate((color >> 16) & 0xFF);
+        main_framebuffer.data[i] = @truncate(color & 0xFF);
+        main_framebuffer.data[i + 1] = @truncate((color >> 8) & 0xFF);
+        main_framebuffer.data[i + 2] = @truncate((color >> 16) & 0xFF);
         i += bpp / 8;
     }
 
-    invalidate_whole_framebuffer(&buffered_hw_framebuffer);
+    invalidate_whole_framebuffer(&main_framebuffer);
 }
 
 pub fn move_to(x: u32, y: u32) void {
@@ -152,7 +152,7 @@ pub fn render(source: ?*Framebuffer, target: ?*Framebuffer) void {
 }
 
 pub fn blit_buffered_framebuffer_to_hw() void {
-    render(&buffered_hw_framebuffer, &hw_framebuffer);
+    render(&main_framebuffer, &hw_framebuffer);
     hw_framebuffer.dirty.x1 = 0;
     hw_framebuffer.dirty.y1 = 0;
     hw_framebuffer.dirty.x2 = 0;
