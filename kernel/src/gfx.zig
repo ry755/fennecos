@@ -169,4 +169,8 @@ pub fn blit_framebuffer_into_framebuffer(source: *Framebuffer, target: *Framebuf
 
 pub fn blit_buffered_framebuffer_to_hw() void {
     blit_framebuffer_into_framebuffer(&buffered_hw_framebuffer, &hw_framebuffer, 0, 0);
+    hw_framebuffer.dirty.x1 = 0;
+    hw_framebuffer.dirty.y1 = 0;
+    hw_framebuffer.dirty.x2 = 0;
+    hw_framebuffer.dirty.y2 = 0;
 }
