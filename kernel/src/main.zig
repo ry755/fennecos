@@ -1,46 +1,46 @@
 const std = @import("std");
 const builtin = std.builtin;
 const gdt = @import("gdt.zig");
-const graphics = @import("graphics.zig");
+const gfx = @import("gfx.zig");
 const ide = @import("ide.zig");
 const idt = @import("idt.zig");
 const isr = @import("isr.zig");
 const multiboot = @import("multiboot.zig");
 const pic = @import("pic.zig");
-const pit = @import("pit.zig");
 const serial = @import("serial.zig");
+const timer = @import("timer.zig");
 const writer = serial.writer;
 
 var test_framebuffer_data = std.mem.zeroes([64 * 64 * 4]u8);
-var test_framebuffer = graphics.Framebuffer{
+var test_framebuffer = gfx.Framebuffer{
     .data = &test_framebuffer_data,
     .width = 64,
     .height = 64,
     .pitch = 64 * 4,
     .bpp = 32,
+    .dirty = gfx.Rectangle{ .x1 = 0, .y1 = 0, .x2 = 0, .y2 = 0 },
 };
 
 export fn kernel_main(multiboot_info: *multiboot.MultibootInfo) void {
     gdt.initialize();
     serial.initialize();
-    pit.initialize();
+    timer.initialize();
     pic.initialize();
     ide.initialize();
-    isr.install_handler(0, nothing); // FIXME: temporary, to avoid "unhandled interrupt" message spam
+    isr.install_handler(0, timer.interrupt_handler);
     idt.initialize();
-    graphics.initialize(
+    gfx.initialize(
         @truncate(multiboot_info.framebuffer_addr),
-        multiboot_info.framebuffer_width,
-        multiboot_info.framebuffer_height,
         multiboot_info.framebuffer_pitch,
         multiboot_info.framebuffer_bpp,
         0x1E1E2E,
     );
 
-    graphics.set_framebuffer(&test_framebuffer);
-    graphics.move_to(8, 8);
-    graphics.draw_string("hi!!", 0xFFFFFF, 0x000000);
-    graphics.blit_framebuffer_into_framebuffer(&test_framebuffer, &graphics.full_framebuffer, 8, 8);
+    gfx.set_framebuffer(&test_framebuffer);
+    gfx.invalidate_whole_framebuffer(&test_framebuffer);
+    gfx.move_to(8, 8);
+    gfx.draw_string("hi!!", 0xFFFFFF, 0x000000);
+    gfx.blit_framebuffer_into_framebuffer(&test_framebuffer, &gfx.buffered_hw_framebuffer, 8, 8);
 
     writer.print("kernel initialization done\n", .{}) catch unreachable;
 
@@ -50,8 +50,4 @@ export fn kernel_main(multiboot_info: *multiboot.MultibootInfo) void {
 pub fn panic(message: []const u8, _: ?*builtin.StackTrace, _: ?usize) noreturn {
     writer.print("\noops!!! a fucky wucky occurred!!!\n{s}\n", .{message}) catch unreachable;
     while (true) {}
-}
-
-pub fn nothing() void {
-    // nothing lol
 }
