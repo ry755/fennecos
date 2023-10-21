@@ -5,7 +5,11 @@ pub const default_font = Font{ .data = @embedFile("font.bin")[0..], .width = 8, 
 pub const Point = struct { x: u32, y: u32 };
 pub const Rectangle = struct { x1: u32, y1: u32, x2: u32, y2: u32 };
 pub const Framebuffer = struct {
+    next: ?*Framebuffer,
+    child: ?*Framebuffer,
     data: [*]u8,
+    x: u32,
+    y: u32,
     width: u32,
     height: u32,
     pitch: u32,
@@ -14,7 +18,11 @@ pub const Framebuffer = struct {
 };
 
 var hw_framebuffer = Framebuffer{
+    .next = null,
+    .child = &buffered_hw_framebuffer,
     .data = undefined,
+    .x = 0,
+    .y = 0,
     .width = 640,
     .height = 480,
     .pitch = undefined,
@@ -24,7 +32,11 @@ var hw_framebuffer = Framebuffer{
 
 var buffered_hw_framebuffer_data = std.mem.zeroes([640 * 480 * 4]u8);
 pub var buffered_hw_framebuffer = Framebuffer{
+    .next = null,
+    .child = null,
     .data = &buffered_hw_framebuffer_data,
+    .x = 0,
+    .y = 0,
     .width = 640,
     .height = 480,
     .pitch = 640 * 4,
@@ -122,7 +134,35 @@ pub fn draw_string(string: []const u8, foreground_color: u32, background_color: 
     }
 }
 
-pub fn blit_framebuffer_into_framebuffer(source: *Framebuffer, target: *Framebuffer, x: u32, y: u32) void {
+pub fn render(source: ?*Framebuffer, target: ?*Framebuffer) void {
+    if (source == null or target == null) return;
+
+    var current = source;
+    var old = current;
+
+    while (true) {
+        old = current;
+
+        render(current.?.child, current);
+        blit_framebuffer_into_framebuffer(current.?, target.?);
+
+        current = current.?.next;
+        if (old.?.next == null) break;
+    }
+}
+
+pub fn blit_buffered_framebuffer_to_hw() void {
+    render(&buffered_hw_framebuffer, &hw_framebuffer);
+    hw_framebuffer.dirty.x1 = 0;
+    hw_framebuffer.dirty.y1 = 0;
+    hw_framebuffer.dirty.x2 = 0;
+    hw_framebuffer.dirty.y2 = 0;
+}
+
+fn blit_framebuffer_into_framebuffer(source: *Framebuffer, target: *Framebuffer) void {
+    const x = source.*.x;
+    const y = source.*.y;
+
     const ymin = y + source.*.dirty.y1;
     var ymax = y + source.*.dirty.y2;
     const xmin = x + source.*.dirty.x1;
@@ -165,12 +205,4 @@ pub fn blit_framebuffer_into_framebuffer(source: *Framebuffer, target: *Framebuf
     source.*.dirty.y1 = 0;
     source.*.dirty.x2 = 0;
     source.*.dirty.y2 = 0;
-}
-
-pub fn blit_buffered_framebuffer_to_hw() void {
-    blit_framebuffer_into_framebuffer(&buffered_hw_framebuffer, &hw_framebuffer, 0, 0);
-    hw_framebuffer.dirty.x1 = 0;
-    hw_framebuffer.dirty.y1 = 0;
-    hw_framebuffer.dirty.x2 = 0;
-    hw_framebuffer.dirty.y2 = 0;
 }

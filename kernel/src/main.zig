@@ -13,7 +13,11 @@ const writer = serial.writer;
 
 var test_framebuffer_data = std.mem.zeroes([64 * 64 * 4]u8);
 var test_framebuffer = gfx.Framebuffer{
+    .next = null,
+    .child = null,
     .data = &test_framebuffer_data,
+    .x = 8,
+    .y = 8,
     .width = 64,
     .height = 64,
     .pitch = 64 * 4,
@@ -40,7 +44,7 @@ export fn kernel_main(multiboot_info: *multiboot.MultibootInfo) void {
     gfx.invalidate_whole_framebuffer(&test_framebuffer);
     gfx.move_to(8, 8);
     gfx.draw_string("hi!!", 0xFFFFFF, 0x000000);
-    gfx.blit_framebuffer_into_framebuffer(&test_framebuffer, &gfx.buffered_hw_framebuffer, 8, 8);
+    gfx.buffered_hw_framebuffer.child = &test_framebuffer;
 
     writer.print("kernel initialization done\n", .{}) catch unreachable;
 
