@@ -43,7 +43,8 @@ export fn kernel_main(multiboot_info: *multiboot.MultibootInfo) void {
     gfx.set_framebuffer(&test_framebuffer);
     gfx.invalidate_whole_framebuffer(&test_framebuffer);
     gfx.move_to(8, 8);
-    gfx.draw_string("hi!!", 0xFFFFFF, 0x000000);
+    gfx.set_color(0xFFFFFF, 0x000000);
+    gfx.draw_string("hi!!");
     gfx.main_framebuffer.child = &test_framebuffer;
 
     writer.print("kernel initialization done\n", .{}) catch unreachable;

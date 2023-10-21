@@ -45,6 +45,8 @@ pub var main_framebuffer = Framebuffer{
 };
 
 var current_coordinates = Point{ .x = 0, .y = 0 };
+var current_foreground_color: u32 = 0xFFFFFF;
+var current_background_color: u32 = 0x000000;
 var current_font: *Font = undefined;
 var current_framebuffer: *Framebuffer = undefined;
 
@@ -70,6 +72,11 @@ pub fn initialize(address: u32, pitch: u32, bpp: u8, color: u32) void {
 pub fn move_to(x: u32, y: u32) void {
     current_coordinates.x = x;
     current_coordinates.y = y;
+}
+
+pub fn set_color(foreground: u32, background: u32) void {
+    current_foreground_color = foreground;
+    current_background_color = background;
 }
 
 pub fn set_font(font: *Font) void {
@@ -126,10 +133,10 @@ pub fn draw_font_tile(tile: u8, x: u32, y: u32, foreground_color: u32, backgroun
     }
 }
 
-pub fn draw_string(string: []const u8, foreground_color: u32, background_color: u32) void {
+pub fn draw_string(string: []const u8) void {
     var x_mut = current_coordinates.x;
     for (string) |c| {
-        draw_font_tile(c, x_mut, current_coordinates.y, foreground_color, background_color, current_font);
+        draw_font_tile(c, x_mut, current_coordinates.y, current_foreground_color, current_background_color, current_font);
         x_mut += current_font.*.width;
     }
 }
