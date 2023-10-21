@@ -1,9 +1,6 @@
-const std = @import("std");
 const gfx = @import("gfx.zig");
 const io = @import("io.zig");
 const isr = @import("isr.zig");
-
-const writer = @import("serial.zig").writer;
 
 const MouseState = enum {
     mouse_state_0,
