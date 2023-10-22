@@ -13,21 +13,8 @@ const pic = @import("pic.zig");
 const ps2 = @import("ps2.zig");
 const serial = @import("serial.zig");
 const timer = @import("timer.zig");
+const winmgr = @import("winmgr.zig");
 const writer = serial.writer;
-
-var test_framebuffer_data = std.mem.zeroes([64 * 64 * 4]u8);
-var test_framebuffer = gfx.Framebuffer{
-    .next = null,
-    .child = null,
-    .data = &test_framebuffer_data,
-    .x = 8,
-    .y = 8,
-    .width = 64,
-    .height = 64,
-    .pitch = 64 * 4,
-    .bpp = 32,
-    .dirty = gfx.Rectangle{ .x1 = 0, .y1 = 0, .x2 = 0, .y2 = 0 },
-};
 
 export fn kernel_main(multiboot_info: *multiboot.MultibootInfo) void {
     gdt.initialize();
@@ -35,7 +22,6 @@ export fn kernel_main(multiboot_info: *multiboot.MultibootInfo) void {
     timer.initialize();
     pic.initialize();
     ide.initialize();
-    idt.initialize();
     ps2.initialize();
     mouse.initialize();
     gfx.initialize(
@@ -43,42 +29,22 @@ export fn kernel_main(multiboot_info: *multiboot.MultibootInfo) void {
         multiboot_info.framebuffer_pitch,
         multiboot_info.framebuffer_bpp,
         0x1E1E2E,
+        multiboot_info.framebuffer_red_field_position,
+        multiboot_info.framebuffer_green_field_position,
+        multiboot_info.framebuffer_blue_field_position,
     );
-
-    gfx.set_framebuffer(&test_framebuffer);
-    gfx.invalidate_whole_framebuffer(&test_framebuffer);
-    gfx.move_to(8, 8);
-    gfx.set_color(0xFFFFFF, 0x000000);
-    gfx.draw_string("hi!!");
-    gfx.main_framebuffer.child = &test_framebuffer;
+    idt.initialize();
 
     writer.print("kernel initialization done\n", .{}) catch unreachable;
 
-    gfx.set_framebuffer(&gfx.main_framebuffer);
-    var x: u32 = 8;
-    var mouse_coords = mouse.coordinates;
-    var mouse_coords_old = mouse_coords;
-    while (true) {
-        const e = event.get_next_event();
-        switch (e.event_type) {
-            .key_down => {
-                const scancode: u8 = @truncate(e.parameters[0]);
-                const character = kbd.scancode_to_ascii(scancode);
-                gfx.move_to(x, 128);
-                gfx.writer.print("{c}", .{character}) catch unreachable;
-                x += gfx.default_font.width;
-            },
-            else => {},
-        }
+    writer.print("{}, {}, {}\n", .{
+        multiboot_info.framebuffer_red_field_position / 8,
+        multiboot_info.framebuffer_green_field_position / 8,
+        multiboot_info.framebuffer_blue_field_position / 8,
+    }) catch unreachable;
 
-        mouse_coords = mouse.coordinates;
-        if (mouse_coords.x != mouse_coords_old.x or
-            mouse_coords.y != mouse_coords_old.y)
-        {
-            mouse_coords_old = mouse_coords;
-            writer.print("x: {}, y: {}\n", .{ mouse_coords.x, mouse_coords.y }) catch unreachable;
-        }
-    }
+    winmgr.initialize();
+    winmgr.event_loop();
 }
 
 pub fn panic(message: []const u8, _: ?*builtin.StackTrace, _: ?usize) noreturn {

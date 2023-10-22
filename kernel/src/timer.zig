@@ -19,7 +19,7 @@ pub fn initialize() void {
 
 pub fn interrupt_handler() void {
     ticks = @addWithOverflow(ticks, 1)[0];
-    if (ticks % 3 == 0) {
+    if (ticks % 2 == 0) {
         gfx.blit_buffered_framebuffer_to_hw();
     }
 }

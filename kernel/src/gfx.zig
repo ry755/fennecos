@@ -18,6 +18,7 @@ pub const Framebuffer = struct {
     pitch: u32,
     bpp: u8,
     dirty: Rectangle,
+    has_alpha: bool,
 };
 
 var hw_framebuffer = Framebuffer{
@@ -31,6 +32,7 @@ var hw_framebuffer = Framebuffer{
     .pitch = undefined,
     .bpp = undefined,
     .dirty = Rectangle{ .x1 = 0, .y1 = 0, .x2 = 0, .y2 = 0 },
+    .has_alpha = false,
 };
 
 var main_framebuffer_data = std.mem.zeroes([640 * 480 * 4]u8);
@@ -45,6 +47,7 @@ pub var main_framebuffer = Framebuffer{
     .pitch = 640 * 4,
     .bpp = 32,
     .dirty = Rectangle{ .x1 = 0, .y1 = 0, .x2 = 0, .y2 = 0 },
+    .has_alpha = false,
 };
 
 var current_coordinates = Point{ .x = 0, .y = 0 };
@@ -53,10 +56,17 @@ var current_background_color: u32 = 0x000000;
 var current_font: *Font = undefined;
 var current_framebuffer: *Framebuffer = undefined;
 
-pub fn initialize(address: u32, pitch: u32, bpp: u8, color: u32) void {
+var hw_framebuffer_red_field_position: u8 = undefined;
+var hw_framebuffer_green_field_position: u8 = undefined;
+var hw_framebuffer_blue_field_position: u8 = undefined;
+
+pub fn initialize(address: u32, pitch: u32, bpp: u8, color: u32, red_pos: u8, green_pos: u8, blue_pos: u8) void {
     hw_framebuffer.data = @ptrFromInt(address);
     hw_framebuffer.bpp = bpp;
     hw_framebuffer.pitch = pitch;
+    hw_framebuffer_red_field_position = red_pos / 8;
+    hw_framebuffer_green_field_position = green_pos / 8;
+    hw_framebuffer_blue_field_position = blue_pos / 8;
     current_framebuffer = &main_framebuffer;
     current_font = @constCast(&default_font);
 
@@ -95,6 +105,41 @@ pub fn invalidate_whole_framebuffer(framebuffer: *Framebuffer) void {
     framebuffer.*.dirty.y1 = 0;
     framebuffer.*.dirty.x2 = framebuffer.*.width;
     framebuffer.*.dirty.y2 = framebuffer.*.height;
+}
+
+pub fn invalidate_whole_framebuffer_chain(framebuffer: ?*Framebuffer) void {
+    if (framebuffer == null) return;
+
+    var current = framebuffer;
+    var old = current;
+
+    while (true) {
+        old = current;
+
+        invalidate_whole_framebuffer_chain(current.?.child);
+        invalidate_whole_framebuffer(current.?);
+
+        current = current.?.next;
+        if (old.?.next == null) break;
+    }
+}
+
+pub fn invalidate_partial_framebuffer(framebuffer: *Framebuffer, dirty: *const Rectangle) void {
+    if (framebuffer.*.dirty.x1 == 0 and
+        framebuffer.*.dirty.y1 == 0 and
+        framebuffer.*.dirty.x2 == 0 and
+        framebuffer.*.dirty.y2 == 0)
+    {
+        framebuffer.*.dirty.x1 = dirty.*.x1;
+        framebuffer.*.dirty.y1 = dirty.*.y1;
+        framebuffer.*.dirty.x2 = dirty.*.x2;
+        framebuffer.*.dirty.y2 = dirty.*.y2;
+    } else {
+        framebuffer.*.dirty.x1 = if (framebuffer.*.dirty.x1 < dirty.*.x1) framebuffer.*.dirty.x1 else dirty.*.x1;
+        framebuffer.*.dirty.y1 = if (framebuffer.*.dirty.y1 < dirty.*.y1) framebuffer.*.dirty.y1 else dirty.*.y1;
+        framebuffer.*.dirty.x2 = if (framebuffer.*.dirty.x2 > dirty.*.x2) framebuffer.*.dirty.x2 else dirty.*.x2;
+        framebuffer.*.dirty.y2 = if (framebuffer.*.dirty.y2 > dirty.*.y2) framebuffer.*.dirty.y2 else dirty.*.y2;
+    }
 }
 
 pub fn draw_font_tile(tile: u8, x: u32, y: u32, foreground_color: u32, background_color: u32, font: *Font) void {
@@ -172,6 +217,8 @@ pub fn blit_buffered_framebuffer_to_hw() void {
 fn blit_framebuffer_into_framebuffer(source: *Framebuffer, target: *Framebuffer) void {
     const x = source.*.x;
     const y = source.*.y;
+    const source_bytes_per_pixel = source.*.bpp / 8;
+    const target_bytes_per_pixel = target.*.bpp / 8;
 
     const ymin = y + source.*.dirty.y1;
     var ymax = y + source.*.dirty.y2;
@@ -184,11 +231,13 @@ fn blit_framebuffer_into_framebuffer(source: *Framebuffer, target: *Framebuffer)
 
     for (ymin..ymax) |y1| {
         for (xmin..xmax) |x1| {
-            const index_dst = (x1 + y1 * target.*.width) * (target.*.bpp / 8);
-            const index_src = ((x1 - x) + (y1 - y) * source.*.width) * (source.*.bpp / 8);
-            target.*.data[index_dst] = source.*.data[index_src];
-            target.*.data[index_dst + 1] = source.*.data[index_src + 1];
-            target.*.data[index_dst + 2] = source.*.data[index_src + 2];
+            const index_dst = (x1 + y1 * target.*.pitch / target_bytes_per_pixel) * target_bytes_per_pixel;
+            const index_src = ((x1 - x) + (y1 - y) * source.*.pitch / source_bytes_per_pixel) * source_bytes_per_pixel;
+
+            if (source.*.bpp == 32 and source.*.has_alpha and source.*.data[index_src + 3] == 0) continue;
+            target.*.data[index_dst + hw_framebuffer_red_field_position] = source.*.data[index_src];
+            target.*.data[index_dst + hw_framebuffer_green_field_position] = source.*.data[index_src + 1];
+            target.*.data[index_dst + hw_framebuffer_blue_field_position] = source.*.data[index_src + 2];
         }
     }
 
