@@ -8,20 +8,26 @@ pub fn initialize() void {
 }
 
 pub fn read(sector: u32, buffer: [*]u8, count: u32) void {
-    while (count) {
-        read_sector(buffer, sector);
-        sector += 1;
-        buffer += SECTOR_SIZE;
-        count -= 1;
+    var sector_mut = sector;
+    var buffer_mut = buffer;
+    var count_mut = count;
+    while (count_mut != 0) {
+        read_sector(buffer_mut, sector_mut);
+        sector_mut += 1;
+        buffer_mut += SECTOR_SIZE;
+        count_mut -= 1;
     }
 }
 
 pub fn write(sector: u32, buffer: [*]u8, count: u32) void {
-    while (count) {
-        write_sector(buffer, sector);
-        sector += 1;
-        buffer += SECTOR_SIZE;
-        count -= 1;
+    var sector_mut = sector;
+    var buffer_mut = buffer;
+    var count_mut = count;
+    while (count_mut != 0) {
+        write_sector(buffer_mut, sector_mut);
+        sector_mut += 1;
+        buffer_mut += SECTOR_SIZE;
+        count_mut -= 1;
     }
 }
 
@@ -34,7 +40,7 @@ fn wait() void {
     while ((io.inb(0x1F7) & 0xC0) != 0x40) {}
 }
 
-fn read_sector(destination: *void, sector: u32) void {
+fn read_sector(destination: [*]u8, sector: u32) void {
     wait();
     io.outb(0x1F2, 1);
     io.outb(0x1F3, @truncate(sector));
@@ -44,10 +50,10 @@ fn read_sector(destination: *void, sector: u32) void {
     io.outb(0x1F7, 0x20);
 
     wait();
-    io.insl(0x1F0, destination, SECTOR_SIZE / 4);
+    io.insl(0x1F0, @ptrCast(destination), SECTOR_SIZE / 4);
 }
 
-fn write_sector(source: *void, sector: u32) void {
+fn write_sector(source: [*]u8, sector: u32) void {
     wait();
     io.outb(0x1F2, 1);
     io.outb(0x1F3, @truncate(sector));
@@ -57,5 +63,5 @@ fn write_sector(source: *void, sector: u32) void {
     io.outb(0x1F7, 0x30);
 
     wait();
-    io.outsl(0x1F0, source, SECTOR_SIZE / 4);
+    io.outsl(0x1F0, @ptrCast(source), SECTOR_SIZE / 4);
 }

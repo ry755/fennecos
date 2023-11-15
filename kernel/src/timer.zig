@@ -3,8 +3,11 @@
 const gfx = @import("gfx.zig");
 const io = @import("io.zig");
 const isr = @import("isr.zig");
+const mouse = @import("mouse.zig");
 
 var ticks: u64 = 0;
+var mouse_coords: gfx.Point = undefined;
+var mouse_coords_old: gfx.Point = undefined;
 
 pub fn initialize() void {
     // mode 2
@@ -20,6 +23,13 @@ pub fn initialize() void {
 pub fn interrupt_handler() void {
     ticks = @addWithOverflow(ticks, 1)[0];
     if (ticks % 2 == 0) {
+        mouse_coords = mouse.coordinates;
+        if (mouse_coords.x != mouse_coords_old.x or
+            mouse_coords.y != mouse_coords_old.y)
+        {
+            gfx.move_cursor(&mouse_coords);
+            mouse_coords_old = mouse_coords;
+        }
         gfx.blit_buffered_framebuffer_to_hw();
     }
 }

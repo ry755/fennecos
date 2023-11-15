@@ -11,7 +11,7 @@ pub const EventType = enum(u32) {
     key_up,
 };
 
-const QueueNode = struct {
+pub const QueueNode = struct {
     data: Event,
     next: ?*QueueNode,
 };

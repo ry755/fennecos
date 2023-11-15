@@ -37,7 +37,7 @@ var hw_framebuffer = Framebuffer{
 
 var main_framebuffer_data = std.mem.zeroes([640 * 480 * 4]u8);
 pub var main_framebuffer = Framebuffer{
-    .next = null,
+    .next = &cursor_framebuffer,
     .child = null,
     .data = &main_framebuffer_data,
     .x = 0,
@@ -48,6 +48,21 @@ pub var main_framebuffer = Framebuffer{
     .bpp = 32,
     .dirty = Rectangle{ .x1 = 0, .y1 = 0, .x2 = 0, .y2 = 0 },
     .has_alpha = false,
+};
+
+var cursor_framebuffer_data = @embedFile("cursor.raw").*;
+var cursor_framebuffer = Framebuffer{
+    .next = null,
+    .child = null,
+    .data = &cursor_framebuffer_data,
+    .x = 0,
+    .y = 0,
+    .width = 8,
+    .height = 12,
+    .pitch = 8 * 4,
+    .bpp = 32,
+    .dirty = Rectangle{ .x1 = 0, .y1 = 0, .x2 = 0, .y2 = 0 },
+    .has_alpha = true,
 };
 
 var current_coordinates = Point{ .x = 0, .y = 0 };
@@ -72,19 +87,32 @@ pub fn initialize(address: u32, pitch: u32, bpp: u8, color: u32, red_pos: u8, gr
 
     // fill the framebuffer with the specified color
     var i: u32 = 0;
-    while (i < @as(u32, 640) * @as(u32, 480) * bpp / 8) {
+    while (i < @as(u32, 640) * @as(u32, 480) * bpp / 8) : (i += bpp / 8) {
         main_framebuffer.data[i] = @truncate(color & 0xFF);
         main_framebuffer.data[i + 1] = @truncate((color >> 8) & 0xFF);
         main_framebuffer.data[i + 2] = @truncate((color >> 16) & 0xFF);
-        i += bpp / 8;
     }
 
     invalidate_whole_framebuffer(&main_framebuffer);
 }
 
-pub fn move_to(x: u32, y: u32) void {
-    current_coordinates.x = x;
-    current_coordinates.y = y;
+pub fn move_to(point: *const Point) void {
+    current_coordinates.x = point.*.x;
+    current_coordinates.y = point.*.y;
+}
+
+pub fn move_cursor(point: *const Point) void {
+    const old_x = cursor_framebuffer.x;
+    const old_y = cursor_framebuffer.y;
+    cursor_framebuffer.x = point.*.x;
+    cursor_framebuffer.y = point.*.y;
+    invalidate_partial_framebuffer(&main_framebuffer, &Rectangle{
+        .x1 = old_x,
+        .y1 = old_y,
+        .x2 = old_x + cursor_framebuffer.width,
+        .y2 = old_y + cursor_framebuffer.height,
+    });
+    invalidate_whole_framebuffer(&cursor_framebuffer);
 }
 
 pub fn set_color(foreground: u32, background: u32) void {
