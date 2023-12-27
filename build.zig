@@ -1,6 +1,7 @@
 const std = @import("std");
 const Builder = std.build.Builder;
 const LazyPath = std.build.LazyPath;
+const zfat = @import("build_fatfs.zig");
 
 pub fn build(b: *Builder) !void {
     // define a freestanding x86 cross-compilation target
@@ -31,6 +32,7 @@ pub fn build(b: *Builder) !void {
     kernel.code_model = .kernel;
     kernel.setLinkerScriptPath(.{ .path = "kernel/linker.ld" });
     kernel.addAssemblyFile(LazyPath.relative("kernel/src/boot.s"));
+    zfat.build(b, kernel);
     b.getInstallStep().dependOn(&b.addInstallArtifact(kernel, .{
         .dest_dir = .{ .override = .{ .custom = "../base_image/boot/" } },
     }).step);

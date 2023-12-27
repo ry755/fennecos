@@ -18,8 +18,6 @@ const timer = @import("timer.zig");
 const winmgr = @import("winmgr.zig");
 const writer = serial.writer;
 
-var ide_disk: fat.State = undefined;
-
 export fn kernel_main(multiboot_info: *multiboot.MultibootInfo) void {
     gdt.initialize();
     serial.initialize();
@@ -39,7 +37,12 @@ export fn kernel_main(multiboot_info: *multiboot.MultibootInfo) void {
     );
     idt.initialize();
     mbr.initialize();
-    fat.initialize(&ide_disk, ide.read, ide.write, mbr.mbr.partitions[0].lba_first_sector);
+    fat.initialize(
+        0,
+        &ide.read,
+        &ide.write,
+        mbr.mbr.partitions[0].lba_first_sector,
+    );
     writer.print("kernel initialization done, entering event loop\n", .{}) catch unreachable;
     event_loop();
 }
