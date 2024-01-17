@@ -19,7 +19,7 @@ pub fn read(sector: u32, buffer: [*]u8, count: u32) void {
     }
 }
 
-pub fn write(sector: u32, buffer: [*]u8, count: u32) void {
+pub fn write(sector: u32, buffer: [*]const u8, count: u32) void {
     var sector_mut = sector;
     var buffer_mut = buffer;
     var count_mut = count;
@@ -53,7 +53,7 @@ fn read_sector(destination: [*]u8, sector: u32) void {
     io.insl(0x1F0, @ptrCast(destination), SECTOR_SIZE / 4);
 }
 
-fn write_sector(source: [*]u8, sector: u32) void {
+fn write_sector(source: [*]const u8, sector: u32) void {
     wait();
     io.outb(0x1F2, 1);
     io.outb(0x1F3, @truncate(sector));
@@ -63,5 +63,5 @@ fn write_sector(source: [*]u8, sector: u32) void {
     io.outb(0x1F7, 0x30);
 
     wait();
-    io.outsl(0x1F0, @ptrCast(source), SECTOR_SIZE / 4);
+    io.outsl(0x1F0, @ptrCast(@constCast(source)), SECTOR_SIZE / 4);
 }

@@ -5,20 +5,20 @@ const fatfs = @import("zfat");
 
 var global_fat: fatfs.FileSystem = undefined;
 var disk_read_sector: *const fn (sector: u32, buffer: [*]u8, count: u32) void = undefined;
-var disk_write_sector: *const fn (sector: u32, buffer: [*]u8, count: u32) void = undefined;
+var disk_write_sector: *const fn (sector: u32, buffer: [*]const u8, count: u32) void = undefined;
 var disk_partition_offset: u32 = 0;
 
 pub fn initialize(
     disk_id: u32,
     read_sector: *const fn (sector: u32, buffer: [*]u8, count: u32) void,
-    write_sector: *const fn (sector: u32, buffer: [*]u8, count: u32) void,
+    write_sector: *const fn (sector: u32, buffer: [*]const u8, count: u32) void,
     partition_offset: u32,
 ) void {
     disk_read_sector = read_sector;
     disk_write_sector = write_sector;
     disk_partition_offset = partition_offset;
 
-    const disk = fatfs.Disk{
+    const disk: fatfs.Disk = fatfs.Disk{
         .getStatusFn = getStatusFn,
         .initializeFn = initializeFn,
         .readFn = readFn,
@@ -26,7 +26,7 @@ pub fn initialize(
         .ioctlFn = ioctlFn,
     };
 
-    fatfs.disks[disk_id] = &disk;
+    fatfs.disks[disk_id] = @constCast(&disk);
 }
 
 fn getStatusFn(interface: *fatfs.Disk) fatfs.Disk.Status {

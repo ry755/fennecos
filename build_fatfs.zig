@@ -6,15 +6,6 @@ pub fn build(b: *std.build.Builder, exe: *std.build.Step.Compile) void {
     link(exe, config);
 
     b.installArtifact(exe);
-
-    const run_cmd = b.addRunArtifact(exe);
-    run_cmd.step.dependOn(b.getInstallStep());
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
-    }
-
-    const run_step = b.step("run", "Run the app");
-    run_step.dependOn(&run_cmd.step);
 }
 
 fn sdkRoot() []const u8 {
@@ -162,7 +153,7 @@ pub const Config = struct {
     use_trim: bool = false,
     tiny: bool = false,
     exfat: bool = false,
-    rtc: RtcConfig = .dynamic,
+    rtc: RtcConfig = .{ .static = .{ .day = 1, .month = .jan, .year = 2024 } },
     filesystem_trust: Trust = .trust_all,
     lock: u32 = 0,
     reentrant: bool = false,
