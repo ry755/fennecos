@@ -43,6 +43,17 @@ export fn kernel_main(multiboot_info: *multiboot.MultibootInfo) void {
         &ide.write,
         mbr.mbr.partitions[0].lba_first_sector,
     );
+    winmgr.initialize();
+
+    fat.global_fat.mount("0:", true) catch @panic("failed to mount 0:");
+    defer fat.global_fat.unmount("0:");
+    var test_file = fat.fatfs.File.openRead("0:/test.txt") catch @panic("failed to open 0:/test.txt");
+    defer test_file.close();
+    var test_reader = test_file.reader();
+    var test_contents: [512]u8 = std.mem.zeroes([512]u8);
+    _ = test_reader.read(&test_contents) catch @panic("failed to read 0:/test.txt");
+    writer.print("{s}\n", .{test_contents}) catch unreachable;
+
     writer.print("kernel initialization done, entering event loop\n", .{}) catch unreachable;
     event_loop();
 }
