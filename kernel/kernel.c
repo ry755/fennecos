@@ -44,6 +44,8 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     init_scheduler();
     init_floppy();
 
+    bool booting_from_floppy = (copied_multiboot_struct.boot_device >> 24) == 0x00 ? true : false;
+
     // mount the hard disk
     kprintf("mounting hard disk\n");
     FATFS hard_disk;
@@ -69,9 +71,10 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
 
     // open and read the font file
     FIL font_file;
-    result = f_open(&font_file, "1:/res/font.bin", FA_READ);
+    char *font_bin = (booting_from_floppy ? "2:/res/font.bin" : "1:/res/font.bin");
+    result = f_open(&font_file, font_bin, FA_READ);
     if (result != FR_OK) {
-        kprintf("failed to open 1:/res/font.bin\n");
+        kprintf("failed to open font.bin from boot disk\n");
         kprintf("error: %d\n", result);
         abort();
     }
@@ -104,7 +107,9 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
         .stream_queue.size = BUFFER_SIZE,
         .stream_queue.data = stdout_file.stream_queue_data
     };
-    new_process("1:/bin/console.elf", NULL, &stdin_file, &stdout_file);
+
+    char *console_elf = (booting_from_floppy ? "2:/bin/console.elf" : "1:/bin/console.elf");
+    new_process(console_elf, NULL, &stdin_file, &stdout_file);
 
     // enter the scheduler
     kprintf("entering scheduler\n");

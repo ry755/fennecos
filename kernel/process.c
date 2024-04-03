@@ -153,7 +153,11 @@ bool new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdout_f
     process->pid = new_pid;
     process->state = RUNNABLE;
     process->page_directory = process_page_directory;
-    strcpy(process->current_directory, strip_last_path_component(path));
+    if (current_process) {
+        strcpy(process->current_directory, current_process->current_directory);
+    } else {
+        strcpy(process->current_directory, strip_last_path_component(path));
+    }
 
     // if there is a current process, make the new process inherit the current process's stdio streams
     if (current_process) {
