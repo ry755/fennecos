@@ -114,13 +114,16 @@ bool new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdout_f
 
     // allocate memory for the process's state
     process_t *process = (process_t *) kallocate(sizeof(process_t), false, NULL);
-    kprintf("allocated process state: 0x%x\n", (uint32_t) process);
     if (!process) {
         kprintf("failed to allocate memory for new process state: %s\n", path);
         free(process_page_directory);
         close(&binary);
         return false;
     }
+
+    // initialize it all to zero
+    memset(process, 0, sizeof(process_t));
+
     uint8_t *process_stack_pointer = (uint8_t *) kallocate(65536, false, NULL);
     if (!process_stack_pointer) {
         kprintf("failed to allocate memory for new process stack: %s\n", path);
