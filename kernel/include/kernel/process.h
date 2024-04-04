@@ -25,6 +25,7 @@ typedef enum process_state_e {
 } process_state_t;
 
 typedef struct process_s {
+    uintptr_t stack_ptr_to_free;
     page_directory_t *page_directory;
     process_context_t *context;
     process_state_t state;

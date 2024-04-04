@@ -206,9 +206,9 @@ uint32_t parse_elf(page_directory_t *page_directory, uint8_t *buffer) {
     elf_main_header_t *header = (elf_main_header_t *) buffer;
     page_directory_t *old_page_directory = current_page_directory;
     switch_page_directory(page_directory);
-    if (!verify_elf(header)) return 0;
-    if (!load_elf_stage_1(page_directory, header)) return 0;
-    if (!load_elf_stage_2(header)) return 0;
+    if (!verify_elf(header)) { switch_page_directory(old_page_directory); return 0; }
+    if (!load_elf_stage_1(page_directory, header)) { switch_page_directory(old_page_directory); return 0; }
+    if (!load_elf_stage_2(header)) { switch_page_directory(old_page_directory); return 0; }
     kprintf("ELF header->entry: 0x%x\n", header->entry);
     uint32_t entry = header->entry;
     switch_page_directory(old_page_directory);

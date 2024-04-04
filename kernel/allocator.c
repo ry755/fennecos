@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 
 extern uint32_t _kernel_end;
 extern page_directory_t *kernel_page_directory;
@@ -20,9 +21,10 @@ void init_allocator() {
     allocator_initialized = true;
 }
 
-void *allocate(uint32_t size) {
+void *allocate(uint32_t size, bool align) {
     block_header_t *block = free_list_head;
     uint32_t real_size = size + sizeof(block_header_t);
+    if (align) real_size += 0x1000;
 
     while (block) {
         if (block->size >= real_size) {
@@ -38,13 +40,37 @@ void *allocate(uint32_t size) {
                 else
                     free_list_head = next;
 
-                return block + sizeof(block_header_t);
+                block->actual_starting_address = 0;
+                if (align) {
+                    // if we need to be aligned, set the address to the start of the actual block and round up the returned block address
+                    block_header_t *old_block = block;
+                    block = (block_header_t *) ((uint32_t) block & 0xFFFFF000);
+                    block = (block_header_t *) ((uint32_t) block + 0x1000 - sizeof(block_header_t));
+                    block->actual_starting_address = (uint32_t) old_block;
+                }
+
+                block_header_t *final_block = (block_header_t *) ((uint8_t *) block + sizeof(block_header_t));
+                kprintf("allocated block at 0x%x, align: %s\n", (uint32_t) final_block, align ? "true" : "false");
+                return final_block;
             }
 
             block->size -= real_size;
+
+            // new block
             block = (block_header_t *) ((uint8_t *) block + block->size);
             block->size = real_size;
-            return block + sizeof(block_header_t);
+            block->actual_starting_address = 0;
+            if (align) {
+                // if we need to be aligned, set the address to the start of the actual block and round up the returned block address
+                block_header_t *old_block = block;
+                block = (block_header_t *) ((uint32_t) block & 0xFFFFF000);
+                block = (block_header_t *) ((uint32_t) block + 0x1000 - sizeof(block_header_t));
+                block->actual_starting_address = (uint32_t) old_block;
+            }
+
+            block_header_t *final_block = (block_header_t *) ((uint8_t *) block + sizeof(block_header_t));
+            kprintf("allocated block at 0x%x, align: %s\n", (uint32_t) final_block, align ? "true" : "false");
+            return final_block;
         }
 
         block = block->next;
@@ -53,27 +79,29 @@ void *allocate(uint32_t size) {
     return 0;
 }
 
-void free(block_header_t *ptr) {
-    ptr -= sizeof(block_header_t);
+void free(void *ptr) {
+    block_header_t *bptr = (block_header_t *) ((uint8_t *) ptr - sizeof(block_header_t));
 
-    ptr->prev = 0;
-    ptr->next = free_list_head;
+    kprintf("freeing block at 0x%x\n", (uint32_t) ptr);
+
+    // if actual_starting_address is not zero then this was an aligned block
+    if (bptr->actual_starting_address != 0) {
+        bptr = (block_header_t *) bptr->actual_starting_address;
+        kprintf("block appeared to be aligned, block actually begins at 0x%x\n", (uint32_t) bptr);
+    }
+
+    bptr->prev = 0;
+    bptr->next = free_list_head;
 
     if (free_list_head)
-        free_list_head->prev = ptr;
+        free_list_head->prev = bptr;
 
-    free_list_head = ptr;
+    free_list_head = bptr;
 }
 
 uint32_t kallocate(uint32_t size, bool align, uint32_t *physical) {
     if (allocator_initialized) {
-        if (align)
-            size += 0x1000;
-        uint32_t ptr = (uint32_t) allocate(size);
-        if (align) {
-            ptr &= 0xFFFFF000;
-            ptr += 0x1000;
-        }
+        uint32_t ptr = (uint32_t) allocate(size, align);
         if (physical) {
             page_t *page = get_page((uint32_t) ptr, false, kernel_page_directory);
             *physical = page->frame * 0x1000 + ((uint32_t) ptr & 0x0FFF);

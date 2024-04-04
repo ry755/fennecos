@@ -27,9 +27,10 @@ static uint32_t find_unused_process() {
 }
 
 static void clean_up_process(uint32_t pid) {
-    // TODO: free process memory here
     processes[pid]->state = UNUSED;
-    // TODO: kfree(processes[pid]);
+    free((void *) processes[pid]->stack_ptr_to_free);
+    free(processes[pid]->page_directory);
+    free(processes[pid]);
     processes[pid] = 0;
 }
 
@@ -97,7 +98,7 @@ bool new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdout_f
     uint8_t *binary_buffer = (uint8_t *) kallocate(binary_size, false, NULL);
     if (!binary_buffer) {
         kprintf("failed to allocate buffer for new process: %s\n", path);
-        // TODO: kfree process_page_directory here
+        free(process_page_directory);
         close(&binary);
         return false;
     }
@@ -106,27 +107,31 @@ bool new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdout_f
     uint32_t bytes_read = read(&binary, (char *) binary_buffer, binary_size);
     if (bytes_read != binary_size) {
         kprintf("failed to read file for new process: %s, error: %d\n", path);
-        // TODO: kfree process_page_directory here
+        free(process_page_directory);
         close(&binary);
         return false;
     }
 
     // allocate memory for the process's state
     process_t *process = (process_t *) kallocate(sizeof(process_t), false, NULL);
+    kprintf("allocated process state: 0x%x\n", (uint32_t) process);
     if (!process) {
         kprintf("failed to allocate memory for new process state: %s\n", path);
-        // TODO: kfree process_page_directory here
+        free(process_page_directory);
         close(&binary);
         return false;
     }
     uint8_t *process_stack_pointer = (uint8_t *) kallocate(65536, false, NULL);
     if (!process_stack_pointer) {
         kprintf("failed to allocate memory for new process stack: %s\n", path);
-        // TODO: kfree process_page_directory here
-        //       kfree process here
+        free(process_page_directory);
+        free(process);
         close(&binary);
         return false;
     }
+
+    // set the pointers to the buffers to free when the process ends
+    process->stack_ptr_to_free = (uintptr_t) process_stack_pointer;
 
     // set the stack pointer
     process_stack_pointer += 65536 - sizeof(process_context_t);
@@ -134,10 +139,11 @@ bool new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdout_f
     // parse the ELF binary and set EIP
     process->context = (process_context_t *) process_stack_pointer;
     process->context->eip = parse_elf(process_page_directory, binary_buffer);
+    free(binary_buffer);
     if (!process->context->eip) {
         kprintf("failed to parse and prepare the ELF for new process: %s\n", path);
-        // TODO: kfree process_page_directory here
-        //       kfree process here
+        free(process_page_directory);
+        free(process);
         close(&binary);
         return false;
     }
