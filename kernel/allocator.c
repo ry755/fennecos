@@ -15,7 +15,7 @@ uintptr_t kalloc_before_init_ptr = (uintptr_t) &_kernel_end;
 void init_allocator() {
     // FIXME: these values shouldn't be hardcoded
     free_list_head = (block_header_t *) 0x01000000;
-    free_list_head->size = 0x01000000;
+    free_list_head->size = 0x05000000;
     free_list_head->next = 0;
     free_list_head->prev = 0;
     allocator_initialized = true;

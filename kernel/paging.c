@@ -71,8 +71,8 @@ void switch_page_directory(page_directory_t *page_directory) {
 }
 
 void map_kernel(page_directory_t *page_directory) {
-    // identity map 63 MiB starting at 1 MiB
-    for (uint32_t i = 0x00100000; i < 0x04000000; i += 0x1000)
+    // identity map 95 MiB starting at 1 MiB
+    for (uint32_t i = 0x00100000; i < 0x06000000; i += 0x1000)
         map_physical_to_virtual(page_directory, i, i, true, true);
 }
 
