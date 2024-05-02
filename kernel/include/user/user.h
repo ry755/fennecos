@@ -40,6 +40,7 @@ uint32_t open(char *path, uint32_t mode);
 uint32_t close(uint32_t file_id);
 uint32_t read(uint32_t file_id, char *buffer, uint32_t bytes_to_read);
 uint32_t write(uint32_t file_id, char *buffer, uint32_t bytes_to_write);
+uint32_t seek(uint32_t file_id, uint32_t offset);
 uint32_t unlink(char *path);
 char *cwd();
 uint32_t chdir(char *dir);

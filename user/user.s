@@ -6,11 +6,12 @@
 .equ SYS_close,          6
 .equ SYS_read,           7
 .equ SYS_write,          8
-.equ SYS_unlink,         9
-.equ SYS_cwd,            10
-.equ SYS_chdir,          11
-.equ SYS_new_event,      12
-.equ SYS_get_next_event, 13
+.equ SYS_seek,           9
+.equ SYS_unlink,         10
+.equ SYS_cwd,            11
+.equ SYS_chdir,          12
+.equ SYS_new_event,      13
+.equ SYS_get_next_event, 14
 
 .macro SYSC name
 .global \name
@@ -28,6 +29,7 @@ SYSC open
 SYSC close
 SYSC read
 SYSC write
+SYSC seek
 SYSC unlink
 SYSC cwd
 SYSC chdir

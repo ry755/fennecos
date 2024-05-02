@@ -208,6 +208,35 @@ uint32_t write(file_t *file, char *buffer, uint32_t bytes_to_write) {
     }
 }
 
+bool seek(file_t *file, uint32_t offset) {
+    switch (file->type) {
+        case T_FILE: {
+            switch (file->filesystem) {
+                case S_FAT: {
+                    return f_lseek(&file->fatfs, offset) == FR_OK;
+                }
+
+                default:
+                case S_UNKNOWN:
+                    kprintf("vfs: attempted to seek file on unknown filesystem\n");
+                    return false;
+            }
+        }
+
+        case T_STREAM: {
+            return false;
+        }
+
+        case T_DIR: {
+            kprintf("vfs: attempted to seek directory\n");
+            return false;
+        }
+
+        default:
+            return false;
+    }
+}
+
 // FIXME: f_unlink() always errors?
 bool unlink(char *path) {
     char full_path[256];

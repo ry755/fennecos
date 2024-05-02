@@ -44,6 +44,7 @@ bool open(file_t *file, char *path, uint8_t mode);
 bool close(file_t *file);
 uint32_t read(file_t *file, char *buffer, uint32_t bytes_to_read);
 uint32_t write(file_t *file, char *buffer, uint32_t bytes_to_write);
+bool seek(file_t *file, uint32_t offset);
 bool unlink(char *path);
 bool chdir(char *path);
 char *strip_last_path_component(char *path);
