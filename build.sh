@@ -154,6 +154,7 @@ user_input_files=(
     "libc/string/strcat.c"
     "libc/string/strcmp.c"
 
+    "libc/fox/alloc.c"
     "libc/fox/string.c"
 )
 
@@ -183,6 +184,7 @@ user_output_files=(
     "build/libc/string/strcat.o"
     "build/libc/string/strcmp.o"
 
+    "build/libc/fox/alloc.o"
     "build/libc/fox/string.o"
 )
 
