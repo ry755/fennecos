@@ -6,6 +6,7 @@
 #include <kernel/ide.h>
 #include <kernel/idt.h>
 #include <kernel/io.h>
+#include <kernel/mouse.h>
 #include <kernel/multiboot.h>
 #include <kernel/paging.h>
 #include <kernel/pic.h>
@@ -37,6 +38,7 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     init_ide();
     init_timer();
     init_ps2_keyboard();
+    init_mouse();
     init_idt();
     memcpy(&copied_multiboot_struct, multiboot_struct, sizeof(multiboot_info_t));
     init_paging();

@@ -17,8 +17,8 @@ uint16_t mouse_x = 0;
 uint16_t mouse_y = 0;
 
 static void update_mouse() {
-    uint16_t rel_x = byte_1 - ((byte_0 << 4) & 0x100);
-    uint16_t rel_y = byte_2 - ((byte_0 << 3) & 0x100);
+    int16_t rel_x = byte_1 - ((byte_0 << 4) & 0x100);
+    int16_t rel_y = byte_2 - ((byte_0 << 3) & 0x100);
     if (rel_x > 0) mouse_x += rel_x; else if ((int16_t) mouse_x > -rel_x) mouse_x -= (-rel_x);
     if (rel_y > 0) {
         if (mouse_y > rel_y) mouse_y -= rel_y;
@@ -57,14 +57,13 @@ void init_mouse() {
     while ((inb(0x64) & 1) != 0);
     outb(0x60, 0xF4);
     inb(0x60);
-    install_interrupt_handler(12, interrupt_handler);
+    install_interrupt_handler(12, mouse_interrupt_handler);
 }
 
 void mouse_interrupt_handler(uint8_t irq, trap_frame_t *trap_frame, uint32_t error) {
     (void) irq;
     (void) trap_frame;
     (void) error;
-
     if ((inb(0x64) & 1) == 0) return;
     switch (state) {
         case mouse_state_0: {
