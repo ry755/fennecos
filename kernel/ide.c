@@ -1,6 +1,7 @@
 #include <kernel/ide.h>
 #include <kernel/io.h>
 #include <kernel/isr.h>
+#include <kernel/timer.h>
 
 #include <fatfs/ff.h>
 #include <fatfs/diskio.h>
