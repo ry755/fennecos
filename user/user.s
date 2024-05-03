@@ -12,6 +12,7 @@
 .equ SYS_chdir,          12
 .equ SYS_new_event,      13
 .equ SYS_get_next_event, 14
+.equ SYS_get_mouse,      15
 
 .macro SYSC name
 .global \name
@@ -35,3 +36,4 @@ SYSC cwd
 SYSC chdir
 SYSC new_event
 SYSC get_next_event
+SYSC get_mouse

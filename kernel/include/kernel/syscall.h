@@ -16,6 +16,7 @@
 #define SYS_chdir          12
 #define SYS_new_event      13
 #define SYS_get_next_event 14
+#define SYS_get_mouse      15
 
 uint32_t syscall(uint32_t syscall, uint32_t esp);
 uint32_t fetch_syscall_u32(uint8_t n);

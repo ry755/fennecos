@@ -19,6 +19,7 @@ extern uint32_t sys_cwd();
 extern uint32_t sys_chdir();
 extern uint32_t sys_new_event();
 extern uint32_t sys_get_next_event();
+extern uint32_t sys_get_mouse();
 
 static uint32_t (*syscalls[])(void) = {
     [SYS_exit]           sys_exit,
@@ -35,6 +36,7 @@ static uint32_t (*syscalls[])(void) = {
     [SYS_chdir]          sys_chdir,
     [SYS_new_event]      sys_new_event,
     [SYS_get_next_event] sys_get_next_event,
+    [SYS_get_mouse]      sys_get_mouse,
 };
 
 static uint32_t fetch_u32(uint32_t address) {

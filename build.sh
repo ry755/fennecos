@@ -15,6 +15,7 @@ kernel_input_files=(
     "kernel/idt.c"
     "kernel/io.c"
     "kernel/isr.c"
+    "kernel/mouse.c"
     "kernel/paging.c"
     "kernel/process.c"
     "kernel/pic.c"
@@ -46,6 +47,7 @@ kernel_input_files=(
     "kernel/syscall/sys_chdir.c"
     "kernel/syscall/sys_new_event.c"
     "kernel/syscall/sys_get_next_event.c"
+    "kernel/syscall/sys_get_mouse.c"
 
     "libk/stdio/kprintf.c"
     "libk/stdio/printf.c"
@@ -80,6 +82,7 @@ kernel_output_files=(
     "build/kernel/idt.o"
     "build/kernel/io.o"
     "build/kernel/isr.o"
+    "build/kernel/mouse.o"
     "build/kernel/paging.o"
     "build/kernel/process.o"
     "build/kernel/pic.o"
@@ -111,6 +114,7 @@ kernel_output_files=(
     "build/kernel/syscall/sys_chdir.o"
     "build/kernel/syscall/sys_new_event.o"
     "build/kernel/syscall/sys_get_next_event.o"
+    "build/kernel/syscall/sys_get_mouse.o"
 
     "build/libk/stdio/kprintf.o"
     "build/libk/stdio/printf.o"
