@@ -2,6 +2,7 @@
 #include <kernel/isr.h>
 #include <kernel/io.h>
 #include <kernel/trapframe.h>
+#include <kernel/event.h>
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -24,9 +25,24 @@ static void update_mouse() {
     } else mouse_y += (-rel_y);
     if (mouse_x > 640) mouse_x = 640;
     if (mouse_y > 480) mouse_y = 480;
+
+    mouse_buttons_t old_mouse_buttons;
+    old_mouse_buttons.left = mouse_buttons.left;
+    old_mouse_buttons.middle = mouse_buttons.middle;
+    old_mouse_buttons.right = mouse_buttons.right;
+
     mouse_buttons.left = (byte_0 & 1) != 0;
     mouse_buttons.middle = (byte_0 & 4) != 0;
     mouse_buttons.right = (byte_0 & 2) != 0;
+
+    // TODO: other buttons?
+    if (mouse_buttons.left != old_mouse_buttons.left) {
+        event_t event;
+        event.type = mouse_buttons.left ? MOUSE_DOWN : MOUSE_UP;
+        event.arg0 = mouse_x;
+        event.arg1 = mouse_y;
+        new_event(&event);
+    }
 }
 
 void init_mouse() {

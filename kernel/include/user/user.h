@@ -12,7 +12,9 @@
 
 typedef enum event_type_e {
     KEY_DOWN,
-    KEY_UP
+    KEY_UP,
+    MOUSE_DOWN,
+    MOUSE_UP
 } event_type_t;
 
 typedef struct event_s {
