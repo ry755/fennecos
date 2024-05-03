@@ -55,7 +55,6 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     if (result != FR_OK) {
         kprintf("failed to mount 1:\n");
         kprintf("error: %d\n", result);
-        abort();
     }
 
     // initialize the ramdisk

@@ -13,7 +13,10 @@ void init_ide() {
 
 void wait_for_disk() {
     // wait for the disk to become ready
-    while((inb(0x1F7) & 0xC0) != 0x40);
+    uint32_t start_tick = get_timer_value();
+    while((inb(0x1F7) & 0xC0) != 0x40)
+        if (get_timer_value() > start_tick + 512)
+            return;
 }
 
 void read_sector(void *destination, uint32_t sector) {
