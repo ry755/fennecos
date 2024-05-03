@@ -45,18 +45,47 @@ static void update_mouse() {
     }
 }
 
+void mouse_wait(bool read) {
+    uint32_t timeout = 100000;
+    if (read) {
+        while (--timeout)
+            if ((inb(0x64) & 1) != 0)
+                return;
+    } else {
+        while (--timeout)
+            if ((inb(0x64) & 2) != 0)
+                return;
+    }
+}
+
 void init_mouse() {
+    outb(0x64, 0xAD);
+    mouse_wait(false);
+    outb(0x64, 0xA8);
+    mouse_wait(false);
+
+    outb(0x64, 0xD4);
+    mouse_wait(false);
+    outb(0x60, 0xF6);
+    inb(0x60);
+
+    mouse_wait(false);
     outb(0x64, 0x20);
+    mouse_wait(true);
     uint8_t status = inb(0x60);
     status |= 1 << 1;
     status &= ~(1 << 5);
+    mouse_wait(false);
     outb(0x64, 0x60);
-    while ((inb(0x64) & 1) != 0);
+    mouse_wait(false);
     outb(0x60, status);
+    mouse_wait(false);
     outb(0x64, 0xD4);
-    while ((inb(0x64) & 1) != 0);
+    mouse_wait(false);
     outb(0x60, 0xF4);
+    mouse_wait(true);
     inb(0x60);
+    outb(0x64, 0xAE);
     install_interrupt_handler(12, mouse_interrupt_handler);
 }
 
