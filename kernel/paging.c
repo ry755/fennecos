@@ -2,6 +2,7 @@
 
 #include <kernel/allocator.h>
 #include <kernel/paging.h>
+#include <kernel/floppy.h>
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -74,6 +75,9 @@ void map_kernel(page_directory_t *page_directory) {
     // identity map 95 MiB starting at 1 MiB
     for (uint32_t i = 0x00100000; i < 0x06000000; i += 0x1000)
         map_physical_to_virtual(page_directory, i, i, true, true);
+    // map floppy DMA memory
+    for (uint32_t i = 0; i < 5; i++)
+        map_physical_to_virtual(page_directory, FLOPPY_DMA_BASE + (i * 0x1000), FLOPPY_DMA_BASE + (i * 0x1000), true, true);
 }
 
 void map_physical_to_virtual(page_directory_t *page_directory, uint32_t physical_address, uint32_t virtual_address, bool is_kernel, bool is_writable) {

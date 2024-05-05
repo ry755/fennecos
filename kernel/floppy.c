@@ -399,10 +399,7 @@ bool floppy_read_sector(uint32_t sector, uint8_t *buffer) {
         read_result = floppy_read_track(FLOPPY_BASE, cyl_read);
 
     if (!read_result) {
-        page_directory_t *old_page_directory = current_page_directory;
-        switch_page_directory(kernel_page_directory);
         memcpy(buffer, &floppy_dma_buffer[(sector % (18 * 2)) * 512], 512);
-        switch_page_directory(old_page_directory);
         cyl_in_buffer = cyl_read;
         return true;
     } else {
