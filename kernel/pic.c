@@ -26,6 +26,17 @@ void init_pic() {
     outb(0xA1, 0x00);
 }
 
+void pic_unmask(uint8_t irq) {
+    uint16_t port;
+    if (irq < 8) {
+        port = 0x21;
+    } else {
+        port = 0xA1;
+        irq -= 8;
+    }
+    outb(port, inb(port) & ~(1 << irq));
+}
+
 void end_of_interrupt(uint8_t irq) {
     if (irq >= 8)
         outb(0xA0, 0x20);

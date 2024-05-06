@@ -3,6 +3,7 @@
 #include <kernel/io.h>
 #include <kernel/trapframe.h>
 #include <kernel/event.h>
+#include <kernel/pic.h>
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -59,6 +60,9 @@ void mouse_wait(bool read) {
 }
 
 void init_mouse() {
+    pic_unmask(2);
+    pic_unmask(12);
+
     outb(0x64, 0xAD);
     mouse_wait(false);
     outb(0x64, 0xA8);
@@ -67,6 +71,7 @@ void init_mouse() {
     outb(0x64, 0xD4);
     mouse_wait(false);
     outb(0x60, 0xF6);
+    mouse_wait(true);
     inb(0x60);
 
     mouse_wait(false);
@@ -85,7 +90,12 @@ void init_mouse() {
     outb(0x60, 0xF4);
     mouse_wait(true);
     inb(0x60);
+    mouse_wait(false);
     outb(0x64, 0xAE);
+    inb(0x60);
+    inb(0x60);
+    inb(0x60);
+    inb(0x60);
     install_interrupt_handler(12, mouse_interrupt_handler);
 }
 
