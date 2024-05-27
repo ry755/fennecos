@@ -23,17 +23,40 @@ pub var coordinates = gfx.Point{ .x = 0, .y = 0 };
 pub var buttons = Buttons{ .left = false, .middle = false, .right = false };
 
 pub fn initialize() void {
+    io.outb(0x64, 0xAD);
+    mouse_wait(false);
+    io.outb(0x64, 0xA8);
+    mouse_wait(false);
+
+    io.outb(0x64, 0xD4);
+    mouse_wait(false);
+    io.outb(0x60, 0xF6);
+    mouse_wait(true);
+    _ = io.inb(0x60);
+
+    mouse_wait(false);
     io.outb(0x64, 0x20);
+    mouse_wait(true);
     var status = io.inb(0x60);
     status |= 1 << 1;
     status &= ~@as(u8, 1 << 5);
+    mouse_wait(false);
     io.outb(0x64, 0x60);
-    while (io.inb(0x64) & 1 != 0) {}
+    mouse_wait(false);
     io.outb(0x60, status);
+    mouse_wait(false);
     io.outb(0x64, 0xD4);
-    while (io.inb(0x64) & 1 != 0) {}
+    mouse_wait(false);
     io.outb(0x60, 0xF4);
+    mouse_wait(true);
     _ = io.inb(0x60);
+    mouse_wait(false);
+    io.outb(0x64, 0xAE);
+    _ = io.inb(0x60);
+    _ = io.inb(0x60);
+    _ = io.inb(0x60);
+    _ = io.inb(0x60);
+
     isr.install_handler(12, interrupt_handler);
 }
 
@@ -68,4 +91,21 @@ fn update() void {
     buttons.left = byte_0 & 1 != 0;
     buttons.middle = byte_0 & 4 != 0;
     buttons.right = byte_0 & 2 != 0;
+}
+
+fn mouse_wait(read: bool) void {
+    var timeout: u32 = 100000;
+    if (read) {
+        while (timeout != 0) {
+            if ((io.inb(0x64) & 1) != 0)
+                return;
+            timeout -= 1;
+        }
+    } else {
+        while (timeout != 0) {
+            if ((io.inb(0x64) & 2) != 0)
+                return;
+            timeout -= 1;
+        }
+    }
 }
