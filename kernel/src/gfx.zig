@@ -211,10 +211,18 @@ pub fn draw_font_tile(tile: u8, x: u32, y: u32, foreground_color: u32, backgroun
 
 pub fn draw_string(string: []const u8) void {
     var x_mut = current_coordinates.x;
+    var y_mut = current_coordinates.y;
     for (string) |c| {
-        draw_font_tile(c, x_mut, current_coordinates.y, current_foreground_color, current_background_color, current_font);
-        x_mut += current_font.*.width;
+        if (c == '\n') {
+            x_mut = current_coordinates.x;
+            y_mut += current_font.*.height;
+        } else {
+            draw_font_tile(c, x_mut, y_mut, current_foreground_color, current_background_color, current_font);
+            x_mut += current_font.*.width;
+        }
     }
+    current_coordinates.x = x_mut;
+    current_coordinates.y = y_mut;
 }
 
 pub fn render(source: ?*Framebuffer, target: ?*Framebuffer) void {
