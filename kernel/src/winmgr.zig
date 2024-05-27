@@ -12,8 +12,8 @@ const Window = struct {
     event_end: ?*event.QueueNode,
 };
 
-var bg_framebuffer_data = @embedFile("bg.raw").*;
-var bg_framebuffer = gfx.Framebuffer{
+var bg_framebuffer_data = std.mem.zeroes([640 * 480 * 4]u8);
+pub var bg_framebuffer = gfx.Framebuffer{
     .next = &test_framebuffer,
     .child = null,
     .data = &bg_framebuffer_data,
