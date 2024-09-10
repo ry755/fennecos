@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-TOOLCHAIN_PATH=~/opt/cross/bin/
+TOOLCHAIN_PATH=
 
 kernel_input_files=(
     "kernel/kernel.c"
@@ -195,7 +195,7 @@ user_output_files=(
 mkdir -p build/kernel/{fatfs,syscall}
 mkdir -p build/libk/{stdio,stdlib,string}
 mkdir -p build/libc/{stdio,stdlib,string,fox}
-mkdir -p build/user/applications/{console,demo,sh}
+mkdir -p build/user/applications/{console,demo,sh,explode}
 
 mkdir -p base_image/bin
 
@@ -233,5 +233,9 @@ ${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/sh/commands/help.c -o build/u
 ${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/sh/commands/ls.c -o build/user/applications/sh/ls.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
 ${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/sh/commands/rm.c -o build/user/applications/sh/rm.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
 ${TOOLCHAIN_PATH}i686-elf-gcc -o base_image/bin/sh.elf -ffreestanding -O2 -nostdlib "${user_output_files[@]}" build/user/applications/sh/main.o build/user/applications/sh/cp.o build/user/applications/sh/help.o build/user/applications/sh/ls.o build/user/applications/sh/rm.o -lgcc
+
+# explode
+${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/explode/main.c -o build/user/applications/explode/main.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
+${TOOLCHAIN_PATH}i686-elf-gcc -o base_image/bin/explode.elf -ffreestanding -O2 -nostdlib "${user_output_files[@]}" build/user/applications/explode/main.o -lgcc
 
 sudo bash image.sh
