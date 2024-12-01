@@ -8,6 +8,9 @@
 
 #define MAX_PROCESSES 32
 
+#define SIGNAL_CHECK 0
+#define SIGNAL_KILL  9
+
 typedef struct process_context_s {
     uint32_t edi;
     uint32_t esi;
@@ -37,8 +40,9 @@ typedef struct process_s {
 
 void init_scheduler();
 void scheduler();
-bool new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdout_file);
+uint32_t new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdout_file);
 void exit_process();
+bool kill_process(uint32_t pid, uint32_t signal);
 void yield_process();
 void switch_process(process_context_t **old, process_context_t *new);
 void sleep_process(uint32_t ticks);

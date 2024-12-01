@@ -34,6 +34,7 @@ kernel_input_files=(
     "kernel/fatfs/ffunicode.c"
 
     "kernel/syscall/sys_exit.c"
+    "kernel/syscall/sys_kill.c"
     "kernel/syscall/sys_yield.c"
     "kernel/syscall/sys_sleep.c"
     "kernel/syscall/sys_new_process.c"
@@ -101,6 +102,7 @@ kernel_output_files=(
     "build/kernel/fatfs/ffunicode.o"
 
     "build/kernel/syscall/sys_exit.o"
+    "build/kernel/syscall/sys_kill.o"
     "build/kernel/syscall/sys_yield.o"
     "build/kernel/syscall/sys_sleep.o"
     "build/kernel/syscall/sys_new_process.o"

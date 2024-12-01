@@ -109,8 +109,8 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
         .stream_queue.data = stdout_file.stream_queue_data
     };
 
-    char *console_elf = (booting_from_floppy ? "2:/bin/console.elf" : "1:/bin/console.elf");
-    new_process(console_elf, NULL, &stdin_file, &stdout_file);
+    char *init_elf = (booting_from_floppy ? "2:/bin/console.elf" : "1:/bin/console.elf");
+    new_process(init_elf, NULL, &stdin_file, &stdout_file);
 
     // enter the scheduler
     kprintf("entering scheduler\n");

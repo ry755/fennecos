@@ -10,6 +10,9 @@
 #define MODE_WRITE  0x02
 #define MODE_CREATE 0x08
 
+#define SIGNAL_CHECK 0
+#define SIGNAL_KILL  9
+
 typedef enum event_type_e {
     KEY_DOWN,
     KEY_UP,
@@ -35,6 +38,7 @@ typedef struct directory_s {
 } directory_t;
 
 uint32_t exit();
+uint32_t kill(uint32_t pid, uint32_t signal);
 uint32_t yield();
 uint32_t sleep(uint32_t ticks);
 uint32_t new_process(char path[], char *argv[]);

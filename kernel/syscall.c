@@ -6,6 +6,7 @@
 uint32_t current_syscall_esp;
 
 extern uint32_t sys_exit();
+extern uint32_t sys_kill();
 extern uint32_t sys_yield();
 extern uint32_t sys_sleep();
 extern uint32_t sys_new_process();
@@ -23,6 +24,7 @@ extern uint32_t sys_get_mouse();
 
 static uint32_t (*syscalls[])(void) = {
     [SYS_exit]           sys_exit,
+    [SYS_kill]           sys_kill,
     [SYS_yield]          sys_yield,
     [SYS_sleep]          sys_sleep,
     [SYS_new_process]    sys_new_process,

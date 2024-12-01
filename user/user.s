@@ -1,18 +1,19 @@
 .equ SYS_exit,           1
-.equ SYS_yield,          2
-.equ SYS_sleep,          3
-.equ SYS_new_process,    4
-.equ SYS_open,           5
-.equ SYS_close,          6
-.equ SYS_read,           7
-.equ SYS_write,          8
-.equ SYS_seek,           9
-.equ SYS_unlink,         10
-.equ SYS_cwd,            11
-.equ SYS_chdir,          12
-.equ SYS_new_event,      13
-.equ SYS_get_next_event, 14
-.equ SYS_get_mouse,      15
+.equ SYS_kill,           2
+.equ SYS_yield,          3
+.equ SYS_sleep,          4
+.equ SYS_new_process,    5
+.equ SYS_open,           6
+.equ SYS_close,          7
+.equ SYS_read,           8
+.equ SYS_write,          9
+.equ SYS_seek,           10
+.equ SYS_unlink,         11
+.equ SYS_cwd,            12
+.equ SYS_chdir,          13
+.equ SYS_new_event,      14
+.equ SYS_get_next_event, 15
+.equ SYS_get_mouse,      16
 
 .macro SYSC name
 .global \name
@@ -23,6 +24,7 @@
 .endm
 
 SYSC exit
+SYSC kill
 SYSC yield
 SYSC sleep
 SYSC new_process

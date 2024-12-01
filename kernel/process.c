@@ -73,18 +73,18 @@ ret:
     } while (flag);
 }
 
-bool new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdout_file) {
+uint32_t new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdout_file) {
     uint32_t new_pid = find_unused_process();
     if (new_pid == (uint32_t) -1) {
         kprintf("max process limit reached, failed to create new process: %s\n", path);
-        return false;
+        return 0;
     }
 
     // open the file
     file_t binary;
     if (!open(&binary, path, MODE_READ)) {
         kprintf("failed to open file for new process: %s\n", path);
-        return false;
+        return 0;
     }
     uint32_t binary_size = f_size(&binary.fatfs); // TODO: implement size getting function in the VFS
 
@@ -100,7 +100,7 @@ bool new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdout_f
         kprintf("failed to allocate buffer for new process: %s\n", path);
         free(process_page_directory);
         close(&binary);
-        return false;
+        return 0;
     }
 
     // read the entire file into the buffer
@@ -109,7 +109,7 @@ bool new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdout_f
         kprintf("failed to read file for new process: %s, error: %d\n", path);
         free(process_page_directory);
         close(&binary);
-        return false;
+        return 0;
     }
 
     // allocate memory for the process's state
@@ -118,7 +118,7 @@ bool new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdout_f
         kprintf("failed to allocate memory for new process state: %s\n", path);
         free(process_page_directory);
         close(&binary);
-        return false;
+        return 0;
     }
 
     // initialize it all to zero
@@ -130,7 +130,7 @@ bool new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdout_f
         free(process_page_directory);
         free(process);
         close(&binary);
-        return false;
+        return 0;
     }
 
     // set the pointers to the buffers to free when the process ends
@@ -148,7 +148,7 @@ bool new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdout_f
         free(process_page_directory);
         free(process);
         close(&binary);
-        return false;
+        return 0;
     }
 
     // push argument strings to the stack
@@ -178,13 +178,27 @@ bool new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdout_f
     }
 
     processes[new_pid] = process;
-    return true;
+    return new_pid;
 }
 
 void exit_process() {
     kprintf("exiting process %d\n", current_process->pid);
     current_process->state = DEAD;
     yield_process();
+}
+
+bool kill_process(uint32_t pid, uint32_t signal) {
+    if (processes[pid] == 0) return false;
+    switch (signal) {
+        case SIGNAL_CHECK: break;
+        case SIGNAL_KILL:
+            kprintf("exiting process %d\n", pid);
+            processes[pid]->state = DEAD;
+            yield_process();
+            break;
+        default: return false;
+    }
+    return true;
 }
 
 void yield_process() {
