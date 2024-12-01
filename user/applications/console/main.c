@@ -309,6 +309,10 @@ void main() {
                 }
             } else if (event.type == KEY_UP) {
                 keyboard_event(event.arg0);
+            } else {
+                // if this isn't a keyboard event, add it back to
+                // the queue for the next process to deal with
+                new_event(&event);
             }
         }
 
