@@ -79,11 +79,20 @@ static void run_command(char *buffer) {
     }
 
     // not an internal command? then try running it as a binary
-    if (!new_process((char *) command.args[0], (char **) command.args)) {
+    uint32_t pid = new_process((char *) command.args[0], (char **) command.args);
+    if (!pid) {
         strcpy(concat_command, command.args[0]);
         strcat(concat_command, ".elf");
-        if (!new_process(concat_command, (char **) command.args))
+        pid = new_process(concat_command, (char **) command.args);
+        if (!pid) {
             printf("failed to run %s\n", command.args[0]);
+            return;
+        }
+    }
+    if (pid) {
+        while (kill(pid, SIGNAL_CHECK)) {
+            yield();
+        }
     }
 }
 
