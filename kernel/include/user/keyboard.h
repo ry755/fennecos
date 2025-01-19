@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define LSHIFT_PRESS   0x2A
 #define LSHIFT_RELEASE 0xAA
@@ -9,5 +10,5 @@
 #define LCTRL_PRESS    0x1D
 #define LCTRL_RELEASE  0x9D
 
-void keyboard_event(uint8_t scancode);
+bool keyboard_event(uint8_t scancode);
 char scancode_to_ascii(uint8_t scancode);

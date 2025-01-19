@@ -76,15 +76,22 @@ char scancode_map_shift[128] = {
 bool shift = false;
 bool ctrl = false;
 
-void keyboard_event(uint8_t scancode) {
-    if (scancode == LSHIFT_PRESS || scancode == RSHIFT_PRESS)
+bool keyboard_event(uint8_t scancode) {
+    if (scancode == LSHIFT_PRESS || scancode == RSHIFT_PRESS) {
         shift = true;
-    else if (scancode == LSHIFT_RELEASE || scancode == RSHIFT_RELEASE)
+        return false;
+    } else if (scancode == LSHIFT_RELEASE || scancode == RSHIFT_RELEASE) {
         shift = false;
-    else if (scancode == LCTRL_PRESS)
+        return false;
+    } else if (scancode == LCTRL_PRESS) {
         ctrl = true;
-    else if (scancode == LCTRL_RELEASE)
+        return false;
+    } else if (scancode == LCTRL_RELEASE) {
         ctrl = false;
+        return false;
+    }
+
+    return true;
 }
 
 char scancode_to_ascii(uint8_t scancode) {

@@ -281,26 +281,27 @@ void main() {
         if (get_next_event(&event)) {
             if (event.type == KEY_DOWN) {
                 if (is_in_line_mode) {
-                    keyboard_event(event.arg0);
-                    char ascii = scancode_to_ascii(event.arg0);
-                    if (ascii != '\b'){
-                        write_buffer[write_buffer_offset++] = ascii;
-                        print_character_to_console(ascii);
-                    } else {
-                        if (write_buffer_offset) {
-                            print_character_to_console('\b');
-                            print_character_to_console(' ');
-                            print_character_to_console('\b');
-                            write_buffer_offset--;
+                    if (keyboard_event(event.arg0)) {
+                        char ascii = scancode_to_ascii(event.arg0);
+                        if (ascii != '\b'){
+                            write_buffer[write_buffer_offset++] = ascii;
+                            print_character_to_console(ascii);
+                        } else {
+                            if (write_buffer_offset) {
+                                print_character_to_console('\b');
+                                print_character_to_console(' ');
+                                print_character_to_console('\b');
+                                write_buffer_offset--;
+                            }
                         }
-                    }
-                    redraw_console_line();
-                    if (write_buffer_offset >= 64) {
-                        write(0, write_buffer, write_buffer_offset);
-                        write_buffer_offset = 0;
-                    } else if (write_buffer[write_buffer_offset - 1] == '\n') {
-                        write(0, write_buffer, write_buffer_offset);
-                        write_buffer_offset = 0;
+                        redraw_console_line();
+                        if (write_buffer_offset >= 64) {
+                            write(0, write_buffer, write_buffer_offset);
+                            write_buffer_offset = 0;
+                        } else if (write_buffer[write_buffer_offset - 1] == '\n') {
+                            write(0, write_buffer, write_buffer_offset);
+                            write_buffer_offset = 0;
+                        }
                     }
                 } else {
                     write_buffer[0] = scancode_to_ascii(event.arg0);
