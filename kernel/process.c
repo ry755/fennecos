@@ -12,7 +12,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#define PROCESS_ENTRY_VADDR 0x08000000
+#define PROCESS_VADDR       0x07FFF000
+#define PROCESS_EXTRA_PAGES 1
+#define PROCESS_ARGS_VADDR  (PROCESS_VADDR)
+#define PROCESS_CODE_VADDR  (PROCESS_ARGS_VADDR + 0x1000)
 
 process_context_t *scheduler_context;
 process_t *processes[MAX_PROCESSES] = { 0 };
@@ -28,6 +31,7 @@ static uint32_t find_unused_process() {
     return (uint32_t) -1;
 }
 
+// TODO: free all of the pages in the process's page directory!!!!
 static void clean_up_process(uint32_t pid) {
     processes[pid]->state = UNUSED;
     free((void *) processes[pid]->stack_ptr_to_free);
@@ -97,7 +101,7 @@ uint32_t new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdo
     map_framebuffer(process_page_directory);
 
     // allocate a buffer to hold the file
-    uint8_t *binary_buffer = (uint8_t *) kallocate(binary_size, true, NULL);
+    uint8_t *binary_buffer = (uint8_t *) kallocate(binary_size, false, NULL);
     if (!binary_buffer) {
         kprintf("failed to allocate buffer for new process: %s\n", path);
         free(process_page_directory);
@@ -141,23 +145,12 @@ uint32_t new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdo
     // set the pointers to the buffers to free when the process ends
     process->stack_ptr_to_free = (uintptr_t) process_stack_pointer;
 
-    // set the stack pointer
-    process_stack_pointer += 65536 - sizeof(process_context_t);
+    // set the initial stack pointer
+    process_stack_pointer += 65535;
 
-    // parse the ELF binary and set EIP
-    /*process->context = (process_context_t *) process_stack_pointer;
-    process->context->eip = parse_elf(process_page_directory, binary_buffer);
-    free(binary_buffer);
-    if (!process->context->eip) {
-        kprintf("failed to parse and prepare the ELF for new process: %s\n", path);
-        free(process_page_directory);
-        free(process);
-        close(&binary);
-        return 0;
-    }*/
-
-    kprintf("mapping %d pages starting at virtual address 0x%x for new process\n", (binary_size / 0x1000) + 1, PROCESS_ENTRY_VADDR);
-    if (!map_consecutive_starting_at(process_page_directory, PROCESS_ENTRY_VADDR, (binary_size / 0x1000) + 1, true, true)) {
+    uint32_t paged_needed = (binary_size / 0x1000) + (PROCESS_EXTRA_PAGES + 1);
+    kprintf("mapping %d pages starting at virtual address 0x%x for new process\n", paged_needed, PROCESS_VADDR);
+    if (!map_consecutive_starting_at(process_page_directory, PROCESS_VADDR, paged_needed, true, true)) {
         kprintf("failed to map\n");
         free(binary_buffer);
         free((void *) process->stack_ptr_to_free);
@@ -167,24 +160,52 @@ uint32_t new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdo
         return 0;
     }
 
-    // copy the binary to the right place and free the buffer
+    // put the argument strings in temporary memory
+    // FIXME: this should really do length checks!
+    //        i wrote this all at 5 AM and it really shows
+    char *temp_args = NULL;
+    uint32_t argc = 0;
+    if (argv) {
+        temp_args = (char *) kallocate(0x1000, false, NULL);
+        if (temp_args) {
+            while (argv[argc]) argc++;
+            for (uint32_t i = 0; i < argc; i++)
+                strcpy(&temp_args[i * 128], argv[i]);
+        } else {
+            kprintf("failed to allocate temporary buffer for arguments\n");
+        }
+    }
+
+    // access new process memory so we can copy the args and the binary
     page_directory_t *old_page_directory = current_page_directory;
     switch_page_directory(process_page_directory);
-    memcpy((void *) PROCESS_ENTRY_VADDR, binary_buffer, binary_size);
-    switch_page_directory(old_page_directory);
-    free(binary_buffer);
+
+    // this sucks and is probably wrong in a lot of ways but it Works who cares im going to sleep
+    if (temp_args) {
+        process_stack_pointer -= (argc * 4) + 12;
+        ((uint32_t *)process_stack_pointer)[argc] = 0;
+        for (uint32_t i = 0; i < argc; i++) {
+            char *offset = (char *) PROCESS_ARGS_VADDR + (i * 128);
+            strcpy(offset, &temp_args[i * 128]);
+            offset[127] = '\0';
+            ((uint32_t *)process_stack_pointer)[i + 2] = (uint32_t) offset;
+        }
+        ((uint32_t *)process_stack_pointer)[1] = (uint32_t) process_stack_pointer + 8;
+        ((uint32_t *)process_stack_pointer)[0] = argc;
+        free(temp_args);
+    }
+
+    // set the final stack pointer
+    process_stack_pointer -= sizeof(process_context_t);
 
     // set up the initial stack and instruction pointers
     process->context = (process_context_t *) process_stack_pointer;
-    process->context->eip = PROCESS_ENTRY_VADDR;
+    process->context->eip = PROCESS_CODE_VADDR;
 
-    // push argument strings to the stack
-    uint32_t argc = 0;
-    if (argv) {
-        for (argc = 0; argv[argc]; argc++) {
-            // TODO: implement
-        }
-    }
+    // copy the binary, go back to the old page directory, and free the buffer
+    memcpy((void *) PROCESS_CODE_VADDR, binary_buffer, binary_size);
+    switch_page_directory(old_page_directory);
+    free(binary_buffer);
 
     process->pid = new_pid;
     process->state = RUNNABLE;
