@@ -82,7 +82,7 @@ static void run_command(char *buffer) {
     uint32_t pid = new_process((char *) command.args[0], (char **) command.args);
     if (!pid) {
         strcpy(concat_command, command.args[0]);
-        strcat(concat_command, ".elf");
+        strcat(concat_command, ".app");
         pid = new_process(concat_command, (char **) command.args);
         if (!pid) {
             printf("failed to run %s\n", command.args[0]);
