@@ -47,19 +47,19 @@ void redraw_console() {
     uint8_t background_color_offset;
     for (uint8_t y = 0; y < CONSOLE_HEIGHT; y++) {
         for (uint8_t x = 0; x < CONSOLE_WIDTH; x++) {
-        if ((on_screen_buffer[y][x] != update_buffer[y][x]) ||
-            (on_screen_color_buffer[y][x][FOREGROUND] != update_color_buffer[y][x][FOREGROUND]) ||
-            (on_screen_color_buffer[y][x][BACKGROUND] != update_color_buffer[y][x][BACKGROUND])) {
-            on_screen_buffer[y][x] = update_buffer[y][x];
-            on_screen_color_buffer[y][x][FOREGROUND] = update_color_buffer[y][x][FOREGROUND];
-            on_screen_color_buffer[y][x][BACKGROUND] = update_color_buffer[y][x][BACKGROUND];
-            foreground_color_offset = update_color_buffer[y][x][FOREGROUND];
-            background_color_offset = update_color_buffer[y][x][BACKGROUND];
-            draw_font_tile(update_buffer[y][x], x * global_font->width, y * global_font->height, colors[foreground_color_offset], colors[background_color_offset], global_font);
-            update_buffer[y][x] = 0;
-            update_color_buffer[y][x][FOREGROUND] = 0;
-            update_color_buffer[y][x][BACKGROUND] = 0;
-        }
+            if ((on_screen_buffer[y][x] != update_buffer[y][x]) ||
+                (on_screen_color_buffer[y][x][FOREGROUND] != update_color_buffer[y][x][FOREGROUND]) ||
+                (on_screen_color_buffer[y][x][BACKGROUND] != update_color_buffer[y][x][BACKGROUND])) {
+                on_screen_buffer[y][x] = update_buffer[y][x];
+                on_screen_color_buffer[y][x][FOREGROUND] = update_color_buffer[y][x][FOREGROUND];
+                on_screen_color_buffer[y][x][BACKGROUND] = update_color_buffer[y][x][BACKGROUND];
+                foreground_color_offset = update_color_buffer[y][x][FOREGROUND];
+                background_color_offset = update_color_buffer[y][x][BACKGROUND];
+                draw_font_tile(update_buffer[y][x], x * global_font->width, y * global_font->height, colors[foreground_color_offset], colors[background_color_offset], global_font);
+                update_buffer[y][x] = 0;
+                update_color_buffer[y][x][FOREGROUND] = 0;
+                update_color_buffer[y][x][BACKGROUND] = 0;
+            }
         }
     }
 }
@@ -113,82 +113,82 @@ void console_handle_esc_code(char character) {
     // TODO: implement the rest of the control codes
     switch (character) {
         case 'm': { // set color
-        for (int i = 0; i <= escape_code_parameter_count; i++) {
-            uint8_t parameter = escape_code_parameters[i];
-            if (parameter == 0) {
-            // reset colors
-            current_foreground_color_offset = DEFAULT_FOREGROUND_COLOR;
-            current_background_color_offset = DEFAULT_BACKGROUND_COLOR;
-            } else if (parameter == 39) {
-            // reset foreground color
-            current_foreground_color_offset = DEFAULT_FOREGROUND_COLOR;
-            } else if (parameter == 49) {
-            // reset background color
-            current_background_color_offset = DEFAULT_BACKGROUND_COLOR;
-            } else if (parameter >= 30 && parameter <= 37) {
-            // set foreground color
-            current_foreground_color_offset = parameter - 30;
-            } else if (parameter >= 40 && parameter <= 47) {
-            // set background color
-            current_background_color_offset = parameter - 40;
+            for (int i = 0; i <= escape_code_parameter_count; i++) {
+                uint8_t parameter = escape_code_parameters[i];
+                if (parameter == 0) {
+                    // reset colors
+                    current_foreground_color_offset = DEFAULT_FOREGROUND_COLOR;
+                    current_background_color_offset = DEFAULT_BACKGROUND_COLOR;
+                } else if (parameter == 39) {
+                    // reset foreground color
+                    current_foreground_color_offset = DEFAULT_FOREGROUND_COLOR;
+                } else if (parameter == 49) {
+                    // reset background color
+                    current_background_color_offset = DEFAULT_BACKGROUND_COLOR;
+                } else if (parameter >= 30 && parameter <= 37) {
+                    // set foreground color
+                    current_foreground_color_offset = parameter - 30;
+                } else if (parameter >= 40 && parameter <= 47) {
+                    // set background color
+                    current_background_color_offset = parameter - 40;
+                }
             }
-        }
-        break;
+            break;
         }
 
         case 'H': { // home cursor OR move to position depending on number of paramters
-        if (escape_code_parameter_count == 0) {
-            // no paramters, so just home the cursor
-            console_x = 0;
-            console_y = 0;
-        } else {
-            // set the cursor position
-            console_x = escape_code_parameters[0];
-            console_y = escape_code_parameters[1];
-        }
-        break;
+            if (escape_code_parameter_count == 0) {
+                // no paramters, so just home the cursor
+                console_x = 0;
+                console_y = 0;
+            } else {
+                // set the cursor position
+                console_x = escape_code_parameters[0];
+                console_y = escape_code_parameters[1];
+            }
+            break;
         }
 
         case 'f': { // move to position
-        console_x = escape_code_parameters[0];
-        console_y = escape_code_parameters[1];
-        break;
+            console_x = escape_code_parameters[0];
+            console_y = escape_code_parameters[1];
+            break;
         }
 
         case 'A': { // move up
-        console_y -= escape_code_parameters[0];
-        if (console_y < 0)
-            console_y = 0;
-        break;
+            console_y -= escape_code_parameters[0];
+            if (console_y < 0)
+                console_y = 0;
+            break;
         }
 
         case 'B': { // move down
-        console_y += escape_code_parameters[0];
-        if (console_y > CONSOLE_HEIGHT - 1)
-            console_y = CONSOLE_HEIGHT - 1;
-        break;
+            console_y += escape_code_parameters[0];
+            if (console_y > CONSOLE_HEIGHT - 1)
+                console_y = CONSOLE_HEIGHT - 1;
+            break;
         }
 
         case 'C': { // move right
-        console_x += escape_code_parameters[0];
-        if (console_x > CONSOLE_WIDTH - 1)
-            console_x = CONSOLE_WIDTH - 1;
-        break;
+            console_x += escape_code_parameters[0];
+            if (console_x > CONSOLE_WIDTH - 1)
+                console_x = CONSOLE_WIDTH - 1;
+            break;
         }
 
         case 'D': { // move left
-        console_x -= escape_code_parameters[0];
-        if (console_x < 0)
-            console_x = 0;
-        break;
+            console_x -= escape_code_parameters[0];
+            if (console_x < 0)
+                console_x = 0;
+            break;
         }
 
         case 'G': { // move to column
-        console_x = escape_code_parameters[0];
-        break;
+            console_x = escape_code_parameters[0];
+            break;
         }
     }
-    }
+}
 
 void print_character_to_console(char character) {
     // check for various characters
@@ -253,13 +253,13 @@ void main() {
     char read_buffer[1];
     char write_buffer[64];
     uint32_t write_buffer_offset = 0;
-    char *string = "FennecOS console\nstarting sh.elf\n\n";
+    char *string = "FennecOS console\nstarting sh.app\n\n";
     while (*string) {
         print_character_to_console(*string);
         string++;
     }
-    if (!new_process("sh.elf", NULL)) {
-        string = "failed to create new process for sh.elf\n";
+    if (!new_process("sh.app", NULL)) {
+        string = "failed to create new process for sh.app\n";
         while (*string) {
             print_character_to_console(*string);
             string++;

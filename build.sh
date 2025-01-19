@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-TOOLCHAIN_PATH=
+TOOLCHAIN_PATH=~/opt/cross/bin/
 
 kernel_input_files=(
     "kernel/kernel.c"
@@ -140,6 +140,9 @@ kernel_output_files=(
 )
 
 user_input_files=(
+    "user/framebuffer.c"
+    "user/keyboard.c"
+
     "libc/stdio/printf.c"
     "libc/stdio/putchar.c"
     "libc/stdio/puts.c"
@@ -162,6 +165,11 @@ user_input_files=(
 
     "libc/fox/alloc.c"
     "libc/fox/string.c"
+)
+
+user_asm_input_files=(
+    "user/crt0.s"
+    "user/user.s"
 )
 
 user_output_files=(
@@ -197,47 +205,42 @@ user_output_files=(
 mkdir -p build/kernel/{fatfs,syscall}
 mkdir -p build/libk/{stdio,stdlib,string}
 mkdir -p build/libc/{stdio,stdlib,string,fox}
-mkdir -p build/user/applications/{console,demo,sh,explode}
+mkdir -p build/user/app
 
-mkdir -p base_image/bin
+mkdir -p base_image/app
+
+USER_GCC_OBJ_FLAGS="-g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/"
+USER_ASM_GCC_OBJ_FLAGS="-g -std=gnu99 -ffreestanding -O2 -Wall -Wextra"
+USER_GCC_ELF_FLAGS="-ffreestanding -O2 -nostdlib -lgcc -T user/user.ld"
+make_user_application () {
+    for i in $(find user/applications/${1}/ -type f -name "*.c"); do
+        mkdir -p build/$(dirname ${i})
+        ${TOOLCHAIN_PATH}i686-elf-gcc -c $i -o build/${i%.*}.o $USER_GCC_OBJ_FLAGS
+    done
+    ${TOOLCHAIN_PATH}i686-elf-gcc -o build/user/app/${1}.elf "${user_output_files[@]}" $(find build/user/applications/${1}/ -type f -name "*.o") $USER_GCC_ELF_FLAGS
+    ${TOOLCHAIN_PATH}i686-elf-objcopy -O binary build/user/app/${1}.elf base_image/app/${1}.app
+}
 
 # kernel
 ${TOOLCHAIN_PATH}i686-elf-as kernel/boot.s -o build/kernel/boot.o
 for file in "${kernel_input_files[@]}"; do
     ${TOOLCHAIN_PATH}i686-elf-gcc -c "$file" -o "build/${file%.*}.o" -g -std=gnu99 -ffreestanding -O0 -Wall -Wextra -Ikernel/include/ -Ilibk/include/
 done
-${TOOLCHAIN_PATH}i686-elf-gcc -T kernel/linker.ld -o base_image/boot/fennecos.elf -ffreestanding -O0 -nostdlib build/kernel/boot.o "${kernel_output_files[@]}" -lgcc
-nm base_image/boot/fennecos.elf -p | grep ' T \| t ' | awk '{ print $1" "$3 }' > base_image/boot/fennecos.sym
+${TOOLCHAIN_PATH}i686-elf-gcc -T kernel/linker.ld -o base_image/boot/kernel.elf -ffreestanding -O0 -nostdlib build/kernel/boot.o "${kernel_output_files[@]}" -lgcc
+nm base_image/boot/kernel.elf -p | grep ' T \| t ' | awk '{ print $1" "$3 }' > base_image/boot/kernel.sym
 
 # user
-# this needs some major cleanup
 for file in "${user_input_files[@]}"; do
-    ${TOOLCHAIN_PATH}i686-elf-gcc -c "$file" -o "build/${file%.*}.o" -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
+    ${TOOLCHAIN_PATH}i686-elf-gcc -c "$file" -o "build/${file%.*}.o" $USER_GCC_OBJ_FLAGS
+done
+for file in "${user_asm_input_files[@]}"; do
+    ${TOOLCHAIN_PATH}i686-elf-gcc -c "$file" -o "build/${file%.*}.o" $USER_ASM_GCC_ELF_FLAGS
 done
 
-${TOOLCHAIN_PATH}i686-elf-gcc -c user/crt0.s -o build/user/crt0.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
-${TOOLCHAIN_PATH}i686-elf-gcc -c user/user.s -o build/user/user.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
-${TOOLCHAIN_PATH}i686-elf-gcc -c user/framebuffer.c -o build/user/framebuffer.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
-${TOOLCHAIN_PATH}i686-elf-gcc -c user/keyboard.c -o build/user/keyboard.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
-
-# console
-${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/console/main.c -o build/user/applications/console/main.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
-${TOOLCHAIN_PATH}i686-elf-gcc -o base_image/bin/console.elf -ffreestanding -O2 -nostdlib "${user_output_files[@]}" build/user/applications/console/main.o -lgcc
-
-# demo
-${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/demo/main.c -o build/user/applications/demo/main.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
-${TOOLCHAIN_PATH}i686-elf-gcc -o base_image/bin/demo.elf -ffreestanding -O2 -nostdlib "${user_output_files[@]}" build/user/applications/demo/main.o -lgcc
-
-# sh
-${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/sh/main.c -o build/user/applications/sh/main.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
-${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/sh/commands/cp.c -o build/user/applications/sh/cp.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
-${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/sh/commands/help.c -o build/user/applications/sh/help.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
-${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/sh/commands/ls.c -o build/user/applications/sh/ls.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
-${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/sh/commands/rm.c -o build/user/applications/sh/rm.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
-${TOOLCHAIN_PATH}i686-elf-gcc -o base_image/bin/sh.elf -ffreestanding -O2 -nostdlib "${user_output_files[@]}" build/user/applications/sh/main.o build/user/applications/sh/cp.o build/user/applications/sh/help.o build/user/applications/sh/ls.o build/user/applications/sh/rm.o -lgcc
-
-# explode
-${TOOLCHAIN_PATH}i686-elf-gcc -c user/applications/explode/main.c -o build/user/applications/explode/main.o -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/
-${TOOLCHAIN_PATH}i686-elf-gcc -o base_image/bin/explode.elf -ffreestanding -O2 -nostdlib "${user_output_files[@]}" build/user/applications/explode/main.o -lgcc
+# user applications
+make_user_application console
+make_user_application demo
+make_user_application sh
+make_user_application explode
 
 sudo bash image.sh

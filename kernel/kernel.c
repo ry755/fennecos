@@ -25,8 +25,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define HD_FONT_PATH "1:/res/font.bin"
+#define FD_FONT_PATH "2:/res/font.bin"
+#define FONT_WIDTH 8
+#define FONT_HEIGHT 16
+
+#define HD_INIT_PATH "1:/app/console.app"
+#define FD_INIT_PATH "2:/app/console.app"
+
 multiboot_info_t copied_multiboot_struct;
-uint8_t temporary_font[8 * 16 * 256];
+uint8_t temporary_font[FONT_WIDTH * FONT_HEIGHT * 256];
 
 extern page_directory_t *kernel_page_directory;
 
@@ -72,7 +80,7 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
 
     // open and read the font file
     FIL font_file;
-    char *font_bin = (booting_from_floppy ? "2:/res/font.bin" : "1:/res/font.bin");
+    char *font_bin = (booting_from_floppy ? FD_FONT_PATH : HD_FONT_PATH);
     result = f_open(&font_file, font_bin, FA_READ);
     if (result != FR_OK) {
         kprintf("failed to open font.bin from boot disk\n");
@@ -80,8 +88,8 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
         abort();
     }
     unsigned int font_bytes_read;
-    f_read(&font_file, temporary_font, 8 * 16 * 256, &font_bytes_read);
-    if (font_bytes_read != 8 * 16 * 256)
+    f_read(&font_file, temporary_font, FONT_WIDTH * FONT_HEIGHT * 256, &font_bytes_read);
+    if (font_bytes_read != FONT_WIDTH * FONT_HEIGHT * 256)
         kprintf("font file read short\n");
     f_close(&font_file);
 
@@ -90,7 +98,7 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
         copied_multiboot_struct.framebuffer_addr,
         copied_multiboot_struct.framebuffer_pitch,
         copied_multiboot_struct.framebuffer_bpp,
-        0x1E1E2E, temporary_font, 8, 16
+        0x1E1E2E, temporary_font, FONT_WIDTH, FONT_HEIGHT
     );
 
     // create stdin and stdout and run the console
@@ -109,8 +117,8 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
         .stream_queue.data = stdout_file.stream_queue_data
     };
 
-    char *init_elf = (booting_from_floppy ? "2:/bin/console.elf" : "1:/bin/console.elf");
-    new_process(init_elf, NULL, &stdin_file, &stdout_file);
+    char *init = (booting_from_floppy ? FD_INIT_PATH : HD_INIT_PATH);
+    new_process(init, NULL, &stdin_file, &stdout_file);
 
     // enter the scheduler
     kprintf("entering scheduler\n");

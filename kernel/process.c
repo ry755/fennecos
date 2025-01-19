@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define PROCESS_ENTRY_VADDR 0x08000000
+
 process_context_t *scheduler_context;
 process_t *processes[MAX_PROCESSES] = { 0 };
 process_t *current_process = 0;
@@ -95,7 +97,7 @@ uint32_t new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdo
     map_framebuffer(process_page_directory);
 
     // allocate a buffer to hold the file
-    uint8_t *binary_buffer = (uint8_t *) kallocate(binary_size, false, NULL);
+    uint8_t *binary_buffer = (uint8_t *) kallocate(binary_size, true, NULL);
     if (!binary_buffer) {
         kprintf("failed to allocate buffer for new process: %s\n", path);
         free(process_page_directory);
@@ -107,6 +109,7 @@ uint32_t new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdo
     uint32_t bytes_read = read(&binary, (char *) binary_buffer, binary_size);
     if (bytes_read != binary_size) {
         kprintf("failed to read file for new process: %s, error: %d\n", path);
+        free(binary_buffer);
         free(process_page_directory);
         close(&binary);
         return 0;
@@ -116,6 +119,7 @@ uint32_t new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdo
     process_t *process = (process_t *) kallocate(sizeof(process_t), false, NULL);
     if (!process) {
         kprintf("failed to allocate memory for new process state: %s\n", path);
+        free(binary_buffer);
         free(process_page_directory);
         close(&binary);
         return 0;
@@ -127,6 +131,7 @@ uint32_t new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdo
     uint8_t *process_stack_pointer = (uint8_t *) kallocate(65536, false, NULL);
     if (!process_stack_pointer) {
         kprintf("failed to allocate memory for new process stack: %s\n", path);
+        free(binary_buffer);
         free(process_page_directory);
         free(process);
         close(&binary);
@@ -140,7 +145,7 @@ uint32_t new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdo
     process_stack_pointer += 65536 - sizeof(process_context_t);
 
     // parse the ELF binary and set EIP
-    process->context = (process_context_t *) process_stack_pointer;
+    /*process->context = (process_context_t *) process_stack_pointer;
     process->context->eip = parse_elf(process_page_directory, binary_buffer);
     free(binary_buffer);
     if (!process->context->eip) {
@@ -149,7 +154,29 @@ uint32_t new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdo
         free(process);
         close(&binary);
         return 0;
+    }*/
+
+    kprintf("mapping %d pages starting at virtual address 0x%x for new process\n", (binary_size / 0x1000) + 1, PROCESS_ENTRY_VADDR);
+    if (!map_consecutive_starting_at(process_page_directory, PROCESS_ENTRY_VADDR, (binary_size / 0x1000) + 1, true, true)) {
+        kprintf("failed to map\n");
+        free(binary_buffer);
+        free((void *) process->stack_ptr_to_free);
+        free(process_page_directory);
+        free(process);
+        close(&binary);
+        return 0;
     }
+
+    // copy the binary to the right place and free the buffer
+    page_directory_t *old_page_directory = current_page_directory;
+    switch_page_directory(process_page_directory);
+    memcpy((void *) PROCESS_ENTRY_VADDR, binary_buffer, binary_size);
+    switch_page_directory(old_page_directory);
+    free(binary_buffer);
+
+    // set up the initial stack and instruction pointers
+    process->context = (process_context_t *) process_stack_pointer;
+    process->context->eip = PROCESS_ENTRY_VADDR;
 
     // push argument strings to the stack
     uint32_t argc = 0;
@@ -192,7 +219,7 @@ bool kill_process(uint32_t pid, uint32_t signal) {
     switch (signal) {
         case SIGNAL_CHECK: break;
         case SIGNAL_KILL:
-            kprintf("exiting process %d\n", pid);
+            kprintf("killing process %d\n", pid);
             processes[pid]->state = DEAD;
             yield_process();
             break;
