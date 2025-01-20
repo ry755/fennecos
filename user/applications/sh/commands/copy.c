@@ -7,9 +7,9 @@
 
 #include "commands.h"
 
-void cp(char *source, char *destination) {
+void cmd_copy(char *source, char *destination) {
     if (!source || !destination) {
-        printf("usage: cp <source> <destination>\n");
+        printf("usage: copy <source> <destination>\n");
         return;
     }
 

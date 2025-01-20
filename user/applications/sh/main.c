@@ -18,7 +18,7 @@ typedef struct command_s {
 char input_buffer[INPUT_BUFFER_SIZE];
 
 static void get_command(char *buffer) {
-    printf("[%s]$ ", cwd());
+    printf("[%s]> ", cwd());
     memset(buffer, 0, INPUT_BUFFER_SIZE);
     gets(buffer);
 }
@@ -54,27 +54,27 @@ static void run_command(char *buffer) {
         return;
     }
 
-    // cp
-    if (!strcmp(command.args[0], "cp")) {
-        cp((char *) command.args[1], (char *) command.args[2]);
+    // copy
+    if (!strcmp(command.args[0], "copy")) {
+        cmd_copy((char *) command.args[1], (char *) command.args[2]);
         return;
     }
 
     // help
     if (!strcmp(command.args[0], "help")) {
-        help();
+        cmd_help();
         return;
     }
 
-    // ls
-    if (!strcmp(command.args[0], "ls")) {
-        ls();
+    // dir
+    if (!strcmp(command.args[0], "dir")) {
+        cmd_dir();
         return;
     }
 
-    // rm
-    if (!strcmp(command.args[0], "rm")) {
-        rm((char *) command.args[1]);
+    // del
+    if (!strcmp(command.args[0], "del")) {
+        cmd_del((char *) command.args[1]);
         return;
     }
 

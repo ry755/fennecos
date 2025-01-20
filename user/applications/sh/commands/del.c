@@ -7,9 +7,9 @@
 
 #include "commands.h"
 
-void rm(char *path) {
+void cmd_del(char *path) {
     if (!path) {
-        printf("usage: rm <path>\n");
+        printf("usage: del <path>\n");
         return;
     }
 

@@ -9,7 +9,7 @@
 
 directory_t dir_entry_buffer;
 
-void ls() {
+void cmd_dir() {
     uint32_t dir = open(cwd(), 0);
     if (dir == (uint32_t) -1) {
         printf("failed to open directory\n");
