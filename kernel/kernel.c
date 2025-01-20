@@ -25,17 +25,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define HD_FONT_PATH "1:/res/font.bin"
-#define FD_FONT_PATH "2:/res/font.bin"
+#define FONT_PATH "/res/font.bin"
 #define FONT_WIDTH 8
 #define FONT_HEIGHT 16
 
-#define HD_INIT_PATH "1:/app/console.app"
-#define FD_INIT_PATH "2:/app/console.app"
+#define INIT_PATH "/app/console.app"
 
 multiboot_info_t copied_multiboot_struct;
 uint8_t temporary_font[FONT_WIDTH * FONT_HEIGHT * 256];
 
+extern char boot_disk_char;
 extern page_directory_t *kernel_page_directory;
 
 void kernel_main(multiboot_info_t *multiboot_struct) {
@@ -55,11 +54,12 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     init_floppy();
 
     bool booting_from_floppy = (copied_multiboot_struct.boot_device >> 24) == 0x00 ? true : false;
+    boot_disk_char = booting_from_floppy ? '2' : '1';
 
     // mount the hard disk
     kprintf("mounting hard disk\n");
     FATFS hard_disk;
-    FRESULT result = f_mount(&hard_disk, "1:", 1);
+    uint32_t result = f_mount(&hard_disk, "1:", 1);
     if (result != FR_OK) {
         kprintf("failed to mount 1:\n");
         kprintf("error: %d\n", result);
@@ -67,7 +67,7 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
 
     // initialize the ramdisk
     FATFS ram_disk;
-    init_ramdisk(&ram_disk, "1:/res/ramdisk.img");
+    init_ramdisk(&ram_disk, "/res/ramdisk.img");
 
     // mount the floppy disk
     kprintf("mounting floppy disk\n");
@@ -79,19 +79,17 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     }
 
     // open and read the font file
-    FIL font_file;
-    char *font_bin = (booting_from_floppy ? FD_FONT_PATH : HD_FONT_PATH);
-    result = f_open(&font_file, font_bin, FA_READ);
-    if (result != FR_OK) {
-        kprintf("failed to open font.bin from boot disk\n");
+    file_t font_file;
+    result = open(&font_file, FONT_PATH, MODE_READ);
+    if (!result) {
+        kprintf("failed to open font\n");
         kprintf("error: %d\n", result);
         abort();
     }
-    unsigned int font_bytes_read;
-    f_read(&font_file, temporary_font, FONT_WIDTH * FONT_HEIGHT * 256, &font_bytes_read);
+    uint32_t font_bytes_read = read(&font_file, (char *) temporary_font, FONT_WIDTH * FONT_HEIGHT * 256);
     if (font_bytes_read != FONT_WIDTH * FONT_HEIGHT * 256)
         kprintf("font file read short\n");
-    f_close(&font_file);
+    close(&font_file);
 
     // initialize the framebuffer
     init_framebuffer(
@@ -101,7 +99,7 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
         0x1E1E2E, temporary_font, FONT_WIDTH, FONT_HEIGHT
     );
 
-    // create stdin and stdout and run the console
+    // create stdin and stdout and run the init process
     file_t stdin_file = {
         .type = T_STREAM,
         .stream_queue.head = 0,
@@ -116,9 +114,7 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
         .stream_queue.size = BUFFER_SIZE,
         .stream_queue.data = stdout_file.stream_queue_data
     };
-
-    char *init = (booting_from_floppy ? FD_INIT_PATH : HD_INIT_PATH);
-    new_process(init, NULL, &stdin_file, &stdout_file);
+    new_process(INIT_PATH, NULL, &stdin_file, &stdout_file);
 
     // enter the scheduler
     kprintf("entering scheduler\n");

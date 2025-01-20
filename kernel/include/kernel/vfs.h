@@ -48,3 +48,4 @@ bool seek(file_t *file, uint32_t offset);
 bool unlink(char *path);
 bool chdir(char *path);
 char *strip_last_path_component(char *path);
+char *make_absolute_path(char *path, char *full_path);

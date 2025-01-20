@@ -44,6 +44,7 @@ static void clean_up_process(uint32_t pid) {
 
 void init_scheduler() {
     scheduler_context = (process_context_t *) kallocate(sizeof(process_context_t), false, NULL);
+    current_process = NULL;
 }
 
 void scheduler() {
@@ -234,7 +235,8 @@ uint32_t new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdo
     if (current_process) {
         strcpy(process->current_directory, current_process->current_directory);
     } else {
-        strcpy(process->current_directory, strip_last_path_component(path));
+        char full_path[256];
+        strcpy(process->current_directory, strip_last_path_component(make_absolute_path(path, full_path)));
     }
 
     // if there is a current process, make the new process inherit the current process's stdio streams

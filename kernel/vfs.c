@@ -9,8 +9,12 @@
 
 extern process_t *current_process;
 
+char boot_disk_char = '0';
+
 static file_system_t get_filesystem(char *path) {
-    switch (*path) {
+    char first = path[0];
+    if (first == '/') first = boot_disk_char;
+    switch (first) {
         case '0':
             return S_FAT;
 
@@ -58,20 +62,14 @@ uint32_t get_unused_file_id() {
 }
 
 bool open(file_t *file, char *path, uint8_t mode) {
-    char full_path[256];
     if (*path == ':') {
         // this is a stream
         file->type = T_STREAM;
         return open_stream(file, path);
     }
-    if (*(path + 1) != ':') {
-        // this is not an absolute path
-        // we need to append it to the process's current directory
-        strcpy(full_path, current_process->current_directory);
-        strcat(full_path, "/");
-        strcat(full_path, path);
-        path = full_path;
-    }
+
+    char full_path[256];
+    path = make_absolute_path(path, full_path);
 
     file->filesystem = get_filesystem(path);
 
@@ -79,6 +77,7 @@ bool open(file_t *file, char *path, uint8_t mode) {
         case S_FAT: {
             if (!open_file(file, path, mode)) {
                 if (!open_dir(file, path)) {
+                    kprintf("vfs: failed to open: %s\n", path);
                     return false;
                 }
             }
@@ -239,19 +238,13 @@ bool seek(file_t *file, uint32_t offset) {
 
 // FIXME: f_unlink() always errors?
 bool unlink(char *path) {
-    char full_path[256];
     if (*path == ':') {
         // this is a stream
         return false;
     }
-    if (*(path + 1) != ':') {
-        // this is not an absolute path
-        // we need to append it to the process's current directory
-        strcpy(full_path, current_process->current_directory);
-        strcat(full_path, "/");
-        strcat(full_path, path);
-        path = full_path;
-    }
+
+    char full_path[256];
+    path = make_absolute_path(path, full_path);
 
     file_system_t filesystem = get_filesystem(path);
 
@@ -270,32 +263,29 @@ bool unlink(char *path) {
     }
 }
 
-// TODO: use the rest of the VFS once it is sufficiently capable
 bool chdir(char *path) {
-    DIR dir;
-    char new_path[256];
+    file_t dir;
+    char full_path[256];
 
     // FIXME: this sucks
     if (!strcmp(path, "..")) {
-        strcpy(new_path, current_process->current_directory);
-        path = strip_last_path_component(new_path);
+        strcpy(full_path, current_process->current_directory);
+        path = strip_last_path_component(full_path);
+    } else {
+        path = make_absolute_path(path, full_path);
     }
 
-    // FIXME: this sucks even more
-    if (f_opendir(&dir, path) != FR_OK) {
-        f_closedir(&dir);
-        strcpy(new_path, current_process->current_directory);
-        if (new_path[strlen(new_path) - 1] != '/')
-            strcat(new_path, "/");
-        strcat(new_path, path);
-        path = new_path;
-        if (f_opendir(&dir, path) != FR_OK)
-            return false;
-    }
+    if (!open_dir(&dir, path)) return false;
+    dir.filesystem = get_filesystem(path);
 
     strcpy(current_process->current_directory, path);
+    uint32_t length = strlen(current_process->current_directory);
+    if (current_process->current_directory[length - 1] != '/') {
+        current_process->current_directory[length] = '/';
+        current_process->current_directory[length + 1] = '\0';
+    }
 
-    f_closedir(&dir);
+    close(&dir);
     return true;
 }
 
@@ -304,10 +294,38 @@ char *strip_last_path_component(char *path) {
     path += strlen(path) - 1;
     if (*path == '/')
         path--;
-    if (*path == ':')
+    if (path == original_path)
         return original_path;
     while (*path-- != '/');
     path++;
     *++path = 0;
     return original_path;
+}
+
+char *make_absolute_path(char *path, char *full_path) {
+    if (path[0] == '/') {
+        // this is an absolute path that refers to the boot disk
+        full_path[0] = boot_disk_char;
+        full_path[1] = ':';
+        full_path[2] = 0;
+        strcat(full_path, path);
+        return full_path;
+    }
+    if (path[1] != ':') {
+        // this is not an absolute path
+        // we need to append it to the process's current directory
+        strcpy(full_path, current_process->current_directory);
+        strcat(full_path, path);
+
+        // recurse to ensure "sh.app" -> "/app/sh.app" -> "2:/app/sh.app"
+        char full_path_2[256];
+        char *path_2 = full_path;
+        path_2 = make_absolute_path(path_2, full_path_2);
+        if (path_2 == full_path_2) {
+            strcpy(full_path, path_2);
+        }
+
+        return full_path;
+    }
+    return path;
 }

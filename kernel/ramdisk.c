@@ -1,5 +1,6 @@
 #include <kernel/serial.h>
 #include <kernel/ramdisk.h>
+#include <kernel/vfs.h>
 
 #include <fatfs/ff.h>
 #include <fatfs/diskio.h>
@@ -14,18 +15,19 @@ uint8_t ramdisk[RAMDISK_SIZE];
 void init_ramdisk(FATFS *disk, char image_path[]) {
     kprintf("mounting ramdisk\n");
 
-    FIL ramdisk_file;
-    FRESULT result = f_open(&ramdisk_file, image_path, FA_READ);
-    if (result != FR_OK) {
+    file_t ramdisk_file;
+    uint32_t result = open(&ramdisk_file, image_path, MODE_READ);
+    if (!result) {
         kprintf("failed to open %s\n", image_path);
         kprintf("error: %d\n", result);
         return;
     }
 
-    unsigned int bytes_read;
-    f_read(&ramdisk_file, ramdisk, RAMDISK_SIZE, &bytes_read);
+    uint32_t bytes_read = read(&ramdisk_file, (char *) ramdisk, RAMDISK_SIZE);
     if (bytes_read != RAMDISK_SIZE)
         kprintf("ramdisk image read short\n");
+
+    close(&ramdisk_file);
 
     result = f_mount(disk, "0:", 1);
     if (result != FR_OK) {
