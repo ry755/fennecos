@@ -218,7 +218,9 @@ make_user_application () {
         ${TOOLCHAIN_PATH}i686-elf-gcc -c $i -o build/${i%.*}.o $USER_GCC_OBJ_FLAGS
     done
     ${TOOLCHAIN_PATH}i686-elf-gcc -o build/user/app/${1}.elf "${user_output_files[@]}" $(find build/user/applications/${1}/ -type f -name "*.o") $USER_GCC_ELF_FLAGS
-    ${TOOLCHAIN_PATH}i686-elf-objcopy -O binary build/user/app/${1}.elf base_image/app/${1}.app
+    ${TOOLCHAIN_PATH}i686-elf-objcopy -O binary build/user/app/${1}.elf build/user/app/${1}.bin
+    BSS_SIZE=$(~/opt/cross/bin/i686-elf-size -x -A build/user/app/${1}.elf | grep ".bss" | awk '{print $2}')
+    ./mkapp.py build/user/app/${1}.bin base_image/app/${1}.app "${1}" $BSS_SIZE
 }
 
 # kernel

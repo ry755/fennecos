@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define APP_HEADER_SIZE     40
+
 #define PROCESS_VADDR       0x07FFF000
 #define PROCESS_EXTRA_PAGES 1
 #define PROCESS_ARGS_VADDR  (PROCESS_VADDR)
@@ -94,6 +96,22 @@ uint32_t new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdo
     }
     uint32_t binary_size = f_size(&binary.fatfs); // TODO: implement size getting function in the VFS
 
+    uint32_t app_header[2];
+    if (read(&binary, (char *) app_header, 8) != 8) {
+        kprintf("failed to read APP header!\n");
+        close(&binary);
+        return 0;
+    }
+    if (app_header[0] != 0x00505041) {
+        kprintf("failed to verify APP magic bytes!\n");
+        close(&binary);
+        return 0;
+    }
+
+    // the app is good, add the bss size to the total
+    uint32_t total_size = binary_size + app_header[1];
+    kprintf("total app size: %d\n", total_size);
+
     // create a new page directory for this process
     page_directory_t *process_page_directory = (page_directory_t *) kallocate(sizeof(page_directory_t), true, NULL);
     memset(process_page_directory, 0, sizeof(page_directory_t));
@@ -109,10 +127,12 @@ uint32_t new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdo
         return 0;
     }
 
-    // read the entire file into the buffer
-    uint32_t bytes_read = read(&binary, (char *) binary_buffer, binary_size);
-    if (bytes_read != binary_size) {
-        kprintf("failed to read file for new process: %s, error: %d\n", path);
+    // read the executable into the buffer
+    seek(&binary, APP_HEADER_SIZE);
+    uint32_t executable_size = binary_size - APP_HEADER_SIZE;
+    uint32_t bytes_read = read(&binary, (char *) binary_buffer, executable_size);
+    if (bytes_read != executable_size) {
+        kprintf("failed to read file for new process: %s\n", path);
         free(binary_buffer);
         free(process_page_directory);
         close(&binary);
@@ -148,9 +168,9 @@ uint32_t new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdo
     // set the initial stack pointer
     process_stack_pointer += 65535;
 
-    uint32_t paged_needed = (binary_size / 0x1000) + (PROCESS_EXTRA_PAGES + 1);
-    kprintf("mapping %d pages starting at virtual address 0x%x for new process\n", paged_needed, PROCESS_VADDR);
-    if (!map_consecutive_starting_at(process_page_directory, PROCESS_VADDR, paged_needed, true, true)) {
+    uint32_t pages_needed = (total_size / 0x1000) + (PROCESS_EXTRA_PAGES + 1);
+    kprintf("mapping %d pages starting at virtual address 0x%x for new process\n", pages_needed, PROCESS_VADDR);
+    if (!map_consecutive_starting_at(process_page_directory, PROCESS_VADDR, pages_needed, true, true)) {
         kprintf("failed to map\n");
         free(binary_buffer);
         free((void *) process->stack_ptr_to_free);
@@ -202,8 +222,9 @@ uint32_t new_process(char path[], char *argv[], file_t *stdin_file, file_t *stdo
     process->context = (process_context_t *) process_stack_pointer;
     process->context->eip = PROCESS_CODE_VADDR;
 
-    // copy the binary, go back to the old page directory, and free the buffer
-    memcpy((void *) PROCESS_CODE_VADDR, binary_buffer, binary_size);
+    // zero the memory, copy the binary, go back to the old page directory, and free the buffer
+    memset((void *) PROCESS_CODE_VADDR, 0, total_size);
+    memcpy((void *) PROCESS_CODE_VADDR, binary_buffer, executable_size);
     switch_page_directory(old_page_directory);
     free(binary_buffer);
 

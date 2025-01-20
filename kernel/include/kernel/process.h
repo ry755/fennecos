@@ -33,6 +33,7 @@ typedef struct process_s {
     process_context_t *context;
     process_state_t state;
     uint32_t pid;
+    char name[32];
     char current_directory[256];
     file_t *files[16];
     uint32_t sleep_until;
