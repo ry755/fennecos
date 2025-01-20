@@ -36,11 +36,10 @@
 
 volatile bool floppy_interrupt_occurred = false;
 uint8_t *floppy_dma_buffer = (void *) FLOPPY_DMA_BASE;
-static volatile uint32_t floppy_motor_ticks = 0;
-static volatile uint32_t floppy_motor_state = 0;
+volatile uint32_t floppy_motor_ticks = 0;
+volatile uint32_t floppy_motor_state = 0;
 static uint32_t cyl_in_buffer = 0xFFFFFFFF;
 
-extern page_directory_t *current_page_directory;
 extern page_directory_t *kernel_page_directory;
 
 static inline void wait_for_floppy_interrupt() {
@@ -115,9 +114,11 @@ void floppy_interrupt_handler(uint8_t irq, trap_frame_t *trap_frame, uint32_t er
 }
 
 void floppy_motor(uint32_t base, int onoff) {
+    floppy_motor_ticks = 500; // 5 seconds
     if (onoff) {
         if (!floppy_motor_state) {
             // need to turn on
+            floppy_motor_state = floppy_motor_on;
             outb(base + FLOPPY_DOR, 0x1C);
             sleep_process(50); // wait 500 ms = hopefully enough for modern drives
         }
@@ -126,29 +127,15 @@ void floppy_motor(uint32_t base, int onoff) {
         if (floppy_motor_state == floppy_motor_wait) {
             kprintf("floppy_motor: strange, fd motor-state already waiting\n");
         }
-        //floppy_motor_ticks = 300; // 3 seconds, see floppy_timer() below
-        //floppy_motor_state = floppy_motor_wait;
-        sleep_process(50);
-        floppy_motor_kill(FLOPPY_BASE);
+        floppy_motor_state = floppy_motor_wait;
     }
 }
 
 void floppy_motor_kill(int base) {
+    kprintf("killing floppy motor\n");
     outb(base + FLOPPY_DOR, 0x0C);
     floppy_motor_state = floppy_motor_off;
 }
-
-/*void floppy_timer() {
-    while (true) {
-        sleep_process(50);
-        if (floppy_motor_state == floppy_motor_wait) {
-            floppy_motor_ticks -= 50;
-            if (floppy_motor_ticks <= 0) {
-                floppy_motor_kill(FLOPPY_BASE);
-            }
-        }
-    }
-}*/
 
 void floppy_write_cmd(uint32_t base, uint8_t cmd) {
     for (uint16_t i = 0; i < 100; i++) {
@@ -185,7 +172,7 @@ int32_t floppy_calibrate(uint32_t base) {
     floppy_motor(base, floppy_motor_on);
 
     for (uint32_t i = 0; i < 10; i++) {
-        // attempt to positions head to cylinder 0
+        // attempt to position head to cylinder 0
         floppy_write_cmd(base, CMD_RECALIBRATE);
         floppy_write_cmd(base, 0); // argument is drive, we only support 0
 
@@ -211,6 +198,9 @@ int32_t floppy_calibrate(uint32_t base) {
 
 uint32_t floppy_reset(uint32_t base) {
     outb(base + FLOPPY_DOR, 0x00); // disable controller
+    sleep_process(50); // 500 ms
+    floppy_interrupt_occurred = false;
+    floppy_motor_state = floppy_motor_off;
     outb(base + FLOPPY_DOR, 0x0C); // enable controller
 
     wait_for_floppy_interrupt();
