@@ -13,6 +13,8 @@
 
 #define BUFFER_SIZE 128
 
+#define MAX_STREAMS 128
+
 typedef enum file_type_e {
     T_FILE   = 0,
     T_STREAM = 1,
@@ -21,7 +23,8 @@ typedef enum file_type_e {
 
 typedef enum file_system_e {
     S_UNKNOWN = 0,
-    S_FAT     = 1
+    S_NONE    = 1,
+    S_FAT     = 2,
 } file_system_t;
 
 typedef struct directory_s {

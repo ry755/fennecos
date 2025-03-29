@@ -10,6 +10,8 @@
 extern process_t *current_process;
 
 char boot_disk_char = '0';
+file_t *streams[MAX_STREAMS] = { 0 };
+uint32_t stream_queue_ref_count[MAX_STREAMS] = { 0 };
 
 static file_system_t get_filesystem(char *path) {
     char first = path[0];
@@ -29,11 +31,67 @@ static file_system_t get_filesystem(char *path) {
     }
 }
 
-static bool open_stream(file_t *file, char *path) {
-    // TODO: implement this
-    (void) file;
-    (void) path;
-    return false;
+static uint32_t get_unused_stream() {
+    for (uint32_t i = 0; i < MAX_STREAMS; i++)
+        if (!streams[i])
+            return i;
+    return (uint32_t) -1;
+}
+
+static bool open_stream(file_t *file, char *path, uint8_t mode) {
+    // first check if this path exists in the stream list
+    uint32_t stream_offset = (uint32_t) -1;
+    for (uint32_t i = 0; i < MAX_STREAMS; i++) {
+        if (streams[i]) {
+            if (strcmp(streams[i]->dir.name, path) == 0) {
+                stream_offset = i;
+            }
+        }
+    }
+    if (mode & MODE_CREATE && stream_offset == (uint32_t) -1) {
+        // stream doesn't exist yet, create it now
+        stream_offset = get_unused_stream();
+        if (stream_offset == (uint32_t) -1) return false;
+        file->type = T_STREAM;
+        file->stream_queue.head = 0;
+        file->stream_queue.tail = 0;
+        file->stream_queue.size = BUFFER_SIZE;
+        file->stream_queue.data = file->stream_queue_data;
+        streams[stream_offset] = file;
+        stream_queue_ref_count[stream_offset] = 1;
+    } else if (stream_offset == (uint32_t) -1) return false;
+
+    // this stream exists
+    file->type = T_STREAM;
+    file->stream_queue = streams[stream_offset]->stream_queue;
+    stream_queue_ref_count[stream_offset]++;
+    return true;
+}
+
+static bool close_stream(file_t *file) {
+    // check if this path exists in the stream list
+    uint32_t stream_offset = (uint32_t) -1;
+    for (uint32_t i = 0; i < MAX_STREAMS; i++) {
+        if (streams[i]) {
+            if (memcmp(&streams[i]->stream_queue, &file->stream_queue, sizeof(queue_t))) {
+                stream_offset = i;
+            }
+        }
+    }
+    if (stream_offset == (uint32_t) -1) return false;
+
+    if (stream_queue_ref_count[stream_offset] == 0) {
+        // ref count is already zero but its still in the stream list??
+        streams[stream_offset] = 0;
+        return false;
+    }
+
+    if (--stream_queue_ref_count[stream_offset] == 0) {
+        // all references to this stream were closed
+        streams[stream_offset] = 0;
+    }
+
+    return true;
 }
 
 static bool open_file(file_t *file, char *path, uint8_t mode) {
@@ -65,7 +123,7 @@ bool open(file_t *file, char *path, uint8_t mode) {
     if (*path == ':') {
         // this is a stream
         file->type = T_STREAM;
-        return open_stream(file, path);
+        return open_stream(file, path, mode);
     }
 
     char full_path[256];
@@ -111,6 +169,13 @@ bool close(file_t *file) {
 
                 default:
                     return false;
+            }
+        }
+
+        case S_NONE: {
+            switch (file->type) {
+                case T_STREAM: return close_stream(file);
+                default: return false;
             }
         }
 
