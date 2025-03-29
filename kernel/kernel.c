@@ -29,7 +29,7 @@
 #define FONT_WIDTH 8
 #define FONT_HEIGHT 16
 
-#define INIT_PATH "/app/console.app"
+#define INIT_PATH "/sys/init.app"
 
 multiboot_info_t copied_multiboot_struct;
 uint8_t temporary_font[FONT_WIDTH * FONT_HEIGHT * 256];

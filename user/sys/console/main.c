@@ -255,15 +255,25 @@ void print_string_to_console(char *string) {
     }
 }
 
-void main() {
+void main(int argc, char *argv[]) {
     event_t event;
     char read_buffer[1];
     char write_buffer[64];
     uint32_t write_buffer_offset = 0;
-    print_string_to_console("FennecOS console\nstarting sh.app\n\n");
-    uint32_t sh_pid = new_process("sh.app", NULL);
+
+    print_string_to_console("FennecOS console\nstarting ");
+    char start_path[256];
+    if (argc > 1) {
+        strcpy(start_path, argv[1]);
+        print_string_to_console(start_path);
+        print_string_to_console("\n\n");
+    }
+
+    uint32_t sh_pid = new_process(start_path, NULL);
     if (!sh_pid) {
-        print_string_to_console("failed to create new process for sh.app\n");
+        print_string_to_console("failed to create new process for ");
+        print_string_to_console(start_path);
+        print_string_to_console("\n");
         exit();
     }
 

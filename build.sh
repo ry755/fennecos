@@ -164,6 +164,7 @@ user_input_files=(
     "libc/string/strcmp.c"
 
     "libc/fox/alloc.c"
+    "libc/fox/debug.c"
     "libc/fox/string.c"
 )
 
@@ -199,6 +200,7 @@ user_output_files=(
     "build/libc/string/strcmp.o"
 
     "build/libc/fox/alloc.o"
+    "build/libc/fox/debug.o"
     "build/libc/fox/string.o"
 )
 
@@ -251,11 +253,11 @@ done
 
 # system applications
 make_system_application init
+make_system_application console
+make_system_application sh
 
 # user applications
-make_user_application console
 make_user_application demo
-make_user_application sh
 make_user_application explode
 
 sudo bash image.sh
