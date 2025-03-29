@@ -43,6 +43,12 @@ static void run_command(char *buffer) {
     command_t command = tokenize(buffer);
     if (!command.args[0]) return;
 
+    // help
+    if (!strcmp(command.args[0], "help")) {
+        cmd_help();
+        return;
+    }
+
     // cd
     if (!strcmp(command.args[0], "cd")) {
         if (command.args[1]) {
@@ -60,12 +66,6 @@ static void run_command(char *buffer) {
         return;
     }
 
-    // help
-    if (!strcmp(command.args[0], "help")) {
-        cmd_help();
-        return;
-    }
-
     // dir
     if (!strcmp(command.args[0], "dir")) {
         cmd_dir();
@@ -76,6 +76,12 @@ static void run_command(char *buffer) {
     if (!strcmp(command.args[0], "del")) {
         cmd_del((char *) command.args[1]);
         return;
+    }
+
+    // exit
+    if (!strcmp(command.args[0], "exit")) {
+        cmd_exit();
+        return; // cmd_exit() shouldn't return, but return just in case
     }
 
     // not an internal command? then try running it as a binary

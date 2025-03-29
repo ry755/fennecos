@@ -13,6 +13,7 @@ void cmd_help() {
     printf("\e[32mcopy <src> <dest> \e[0m|\e[35m copy file <src> to <dest>\e[0m\n");
     printf("\e[32mhelp              \e[0m|\e[35m print this help text\e[0m\n");
     printf("\e[32mdir               \e[0m|\e[35m list all files in the current working directory\e[0m\n");
-    printf("\e[32mdel <path>        \e[0m|\e[35m remove file <path>\e[0m\n\n");
-    printf("type the name of a .app binary (with or without extension) to launch it\n");
+    printf("\e[32mdel <path>        \e[0m|\e[35m remove file <path>\e[0m\n");
+    printf("\e[32mexit              \e[0m|\e[35m exit this shell\e[0m\n");
+    printf("\ntype the name of a .app binary (with or without extension) to launch it\n");
 }

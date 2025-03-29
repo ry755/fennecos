@@ -205,22 +205,32 @@ user_output_files=(
 mkdir -p build/kernel/{fatfs,syscall}
 mkdir -p build/libk/{stdio,stdlib,string}
 mkdir -p build/libc/{stdio,stdlib,string,fox}
-mkdir -p build/user/app
+mkdir -p build/user/{app,sys}
 
-mkdir -p base_image/app
+mkdir -p base_image/{app,sys}
 
 USER_GCC_OBJ_FLAGS="-g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/"
 USER_ASM_GCC_OBJ_FLAGS="-g -std=gnu99 -ffreestanding -O2 -Wall -Wextra"
 USER_GCC_ELF_FLAGS="-ffreestanding -O2 -nostdlib -lgcc -T user/user.ld"
 make_user_application () {
-    for i in $(find user/applications/${1}/ -type f -name "*.c"); do
+    for i in $(find user/app/${1}/ -type f -name "*.c"); do
         mkdir -p build/$(dirname ${i})
         ${TOOLCHAIN_PATH}i686-elf-gcc -c $i -o build/${i%.*}.o $USER_GCC_OBJ_FLAGS
     done
-    ${TOOLCHAIN_PATH}i686-elf-gcc -o build/user/app/${1}.elf "${user_output_files[@]}" $(find build/user/applications/${1}/ -type f -name "*.o") $USER_GCC_ELF_FLAGS
+    ${TOOLCHAIN_PATH}i686-elf-gcc -o build/user/app/${1}.elf "${user_output_files[@]}" $(find build/user/app/${1}/ -type f -name "*.o") $USER_GCC_ELF_FLAGS
     ${TOOLCHAIN_PATH}i686-elf-objcopy -O binary build/user/app/${1}.elf build/user/app/${1}.bin
     BSS_SIZE=$(~/opt/cross/bin/i686-elf-size -x -A build/user/app/${1}.elf | grep ".bss" | awk '{print $2}')
     ./mkapp.py build/user/app/${1}.bin base_image/app/${1}.app "${1}" $BSS_SIZE
+}
+make_system_application () {
+    for i in $(find user/sys/${1}/ -type f -name "*.c"); do
+        mkdir -p build/$(dirname ${i})
+        ${TOOLCHAIN_PATH}i686-elf-gcc -c $i -o build/${i%.*}.o $USER_GCC_OBJ_FLAGS
+    done
+    ${TOOLCHAIN_PATH}i686-elf-gcc -o build/user/sys/${1}.elf "${user_output_files[@]}" $(find build/user/sys/${1}/ -type f -name "*.o") $USER_GCC_ELF_FLAGS
+    ${TOOLCHAIN_PATH}i686-elf-objcopy -O binary build/user/sys/${1}.elf build/user/sys/${1}.bin
+    BSS_SIZE=$(~/opt/cross/bin/i686-elf-size -x -A build/user/sys/${1}.elf | grep ".bss" | awk '{print $2}')
+    ./mkapp.py build/user/sys/${1}.bin base_image/sys/${1}.app "${1}" $BSS_SIZE
 }
 
 # kernel
@@ -238,6 +248,9 @@ done
 for file in "${user_asm_input_files[@]}"; do
     ${TOOLCHAIN_PATH}i686-elf-gcc -c "$file" -o "build/${file%.*}.o" $USER_ASM_GCC_ELF_FLAGS
 done
+
+# system applications
+make_system_application init
 
 # user applications
 make_user_application console

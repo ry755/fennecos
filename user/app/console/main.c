@@ -248,26 +248,26 @@ void print_character_to_console(char character) {
     console_x++;
 }
 
+void print_string_to_console(char *string) {
+    while (*string) {
+        print_character_to_console(*string);
+        string++;
+    }
+}
+
 void main() {
     event_t event;
     char read_buffer[1];
     char write_buffer[64];
     uint32_t write_buffer_offset = 0;
-    char *string = "FennecOS console\nstarting sh.app\n\n";
-    while (*string) {
-        print_character_to_console(*string);
-        string++;
-    }
-    if (!new_process("sh.app", NULL)) {
-        string = "failed to create new process for sh.app\n";
-        while (*string) {
-            print_character_to_console(*string);
-            string++;
-        }
+    print_string_to_console("FennecOS console\nstarting sh.app\n\n");
+    uint32_t sh_pid = new_process("sh.app", NULL);
+    if (!sh_pid) {
+        print_string_to_console("failed to create new process for sh.app\n");
         exit();
     }
 
-    while (true) {
+    while (kill(sh_pid, SIGNAL_CHECK)) {
         // read from other processes' stdout
         // read 128 characters before yielding
         for (uint8_t i = 0; i < 128; i++) {
@@ -319,4 +319,6 @@ void main() {
 
         yield();
     }
+
+    print_string_to_console("\nconsole is exiting\n");
 }
