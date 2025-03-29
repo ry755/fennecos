@@ -10,6 +10,7 @@ extern uint32_t sys_kill();
 extern uint32_t sys_yield();
 extern uint32_t sys_sleep();
 extern uint32_t sys_new_process();
+extern uint32_t sys_get_pid();
 extern uint32_t sys_open();
 extern uint32_t sys_close();
 extern uint32_t sys_read();
@@ -28,6 +29,7 @@ static uint32_t (*syscalls[])(void) = {
     [SYS_yield]          sys_yield,
     [SYS_sleep]          sys_sleep,
     [SYS_new_process]    sys_new_process,
+    [SYS_get_pid]        sys_get_pid,
     [SYS_open]           sys_open,
     [SYS_close]          sys_close,
     [SYS_read]           sys_read,

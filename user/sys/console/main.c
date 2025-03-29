@@ -261,13 +261,12 @@ void main(int argc, char *argv[]) {
     char write_buffer[64];
     uint32_t write_buffer_offset = 0;
 
-    print_string_to_console("FennecOS console\nstarting ");
+    //print_string_to_console("FennecOS text console\n");
     char start_path[256];
-    if (argc > 1) {
+    if (argc > 1)
         strcpy(start_path, argv[1]);
-        print_string_to_console(start_path);
-        print_string_to_console("\n\n");
-    }
+    else
+        strcpy(start_path, "/sys/sh.app");
 
     uint32_t sh_pid = new_process(start_path, NULL);
     if (!sh_pid) {
