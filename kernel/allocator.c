@@ -1,6 +1,7 @@
 #include <kernel/allocator.h>
 #include <kernel/paging.h>
 
+#include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -18,6 +19,8 @@ void init_allocator() {
     free_list_head->size = 0x05000000;
     free_list_head->next = 0;
     free_list_head->prev = 0;
+    free_list_head->actual_starting_address = 0;
+    free_list_head->flag = BLOCK_FREE_FLAG;
     allocator_initialized = true;
 }
 
@@ -41,6 +44,7 @@ void *allocate(uint32_t size, bool align) {
                     free_list_head = next;
 
                 block->actual_starting_address = 0;
+                block->flag = BLOCK_USED_FLAG;
                 if (align) {
                     // if we need to be aligned, set the address to the start of the actual block and round up the returned block address
                     block_header_t *old_block = block;
@@ -60,6 +64,7 @@ void *allocate(uint32_t size, bool align) {
             block = (block_header_t *) ((uint8_t *) block + block->size);
             block->size = real_size;
             block->actual_starting_address = 0;
+            block->flag = BLOCK_USED_FLAG;
             if (align) {
                 // if we need to be aligned, set the address to the start of the actual block and round up the returned block address
                 block_header_t *old_block = block;
@@ -90,8 +95,26 @@ void free(void *ptr) {
         kprintf("block appeared to be aligned, block actually begins at 0x%x\n", (uint32_t) bptr);
     }
 
+    // ensure the block header is okay and this isn't a double-free
+    if ((bptr->flag != BLOCK_FREE_FLAG) && (bptr->flag != BLOCK_USED_FLAG)) {
+        kprintf("BLOCK AT 0x%x APPEARS CORRUPTED!!\n", (uint32_t) ptr);
+        kprintf(
+            "block info\nbptr->size = 0x%x\nbptr->prev = 0x%x\nbptr->next = 0x%x\nbptr->actual_starting_address = 0x%x\nbptr->flag = 0x%x\n",
+            bptr->size, bptr->prev, bptr->next, bptr->actual_starting_address, bptr->flag
+        );
+        abort();
+    } else if (bptr->flag == BLOCK_FREE_FLAG) {
+        kprintf("BLOCK AT 0x%x ALREADY FREED!!\n", (uint32_t) ptr);
+        kprintf(
+            "block info\nbptr->size = 0x%x\nbptr->prev = 0x%x\nbptr->next = 0x%x\nbptr->actual_starting_address = 0x%x\nbptr->flag = 0x%x\n",
+            bptr->size, bptr->prev, bptr->next, bptr->actual_starting_address, bptr->flag
+        );
+        abort();
+    }
+
     bptr->prev = 0;
     bptr->next = free_list_head;
+    bptr->flag = BLOCK_FREE_FLAG;
 
     if (free_list_head)
         free_list_head->prev = bptr;
