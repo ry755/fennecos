@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-TOOLCHAIN_PATH=~/opt/cross/bin/
+#TOOLCHAIN_PATH=~/opt/cross/bin/
 
 kernel_input_files=(
     "kernel/kernel.c"
@@ -223,7 +223,7 @@ make_user_application () {
     done
     ${TOOLCHAIN_PATH}i686-elf-gcc -o build/user/app/${1}.elf "${user_output_files[@]}" $(find build/user/app/${1}/ -type f -name "*.o") $USER_GCC_ELF_FLAGS
     ${TOOLCHAIN_PATH}i686-elf-objcopy -O binary build/user/app/${1}.elf build/user/app/${1}.bin
-    BSS_SIZE=$(~/opt/cross/bin/i686-elf-size -x -A build/user/app/${1}.elf | grep ".bss" | awk '{print $2}')
+    BSS_SIZE=$(${TOOLCHAIN_PATH}i686-elf-size -x -A build/user/app/${1}.elf | grep ".bss" | awk '{print $2}')
     ./mkapp.py build/user/app/${1}.bin base_image/app/${1}.app "${1}" $BSS_SIZE
 }
 make_system_application () {
@@ -233,7 +233,7 @@ make_system_application () {
     done
     ${TOOLCHAIN_PATH}i686-elf-gcc -o build/user/sys/${1}.elf "${user_output_files[@]}" $(find build/user/sys/${1}/ -type f -name "*.o") $USER_GCC_ELF_FLAGS
     ${TOOLCHAIN_PATH}i686-elf-objcopy -O binary build/user/sys/${1}.elf build/user/sys/${1}.bin
-    BSS_SIZE=$(~/opt/cross/bin/i686-elf-size -x -A build/user/sys/${1}.elf | grep ".bss" | awk '{print $2}')
+    BSS_SIZE=$(${TOOLCHAIN_PATH}i686-elf-size -x -A build/user/sys/${1}.elf | grep ".bss" | awk '{print $2}')
     ./mkapp.py build/user/sys/${1}.bin base_image/sys/${1}.app "${1}" $BSS_SIZE
 }
 
