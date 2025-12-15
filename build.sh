@@ -6,7 +6,7 @@ set -e
 kernel_input_files=(
     "kernel/kernel.c"
     "kernel/allocator.c"
-    "kernel/elf.c"
+    "kernel/app.c"
     "kernel/event.c"
     "kernel/floppy.c"
     "kernel/framebuffer.c"
@@ -16,7 +16,6 @@ kernel_input_files=(
     "kernel/io.c"
     "kernel/isr.c"
     "kernel/mouse.c"
-    "kernel/paging.c"
     "kernel/process.c"
     "kernel/pic.c"
     "kernel/pit.c"
@@ -50,6 +49,7 @@ kernel_input_files=(
     "kernel/syscall/sys_new_event.c"
     "kernel/syscall/sys_get_next_event.c"
     "kernel/syscall/sys_get_mouse.c"
+    "kernel/syscall/sys_get_fb.c"
 
     "libk/stdio/kprintf.c"
     "libk/stdio/printf.c"
@@ -75,7 +75,7 @@ kernel_input_files=(
 kernel_output_files=(
     "build/kernel/kernel.o"
     "build/kernel/allocator.o"
-    "build/kernel/elf.o"
+    "build/kernel/app.o"
     "build/kernel/event.o"
     "build/kernel/floppy.o"
     "build/kernel/framebuffer.o"
@@ -85,7 +85,6 @@ kernel_output_files=(
     "build/kernel/io.o"
     "build/kernel/isr.o"
     "build/kernel/mouse.o"
-    "build/kernel/paging.o"
     "build/kernel/process.o"
     "build/kernel/pic.o"
     "build/kernel/pit.o"
@@ -119,6 +118,7 @@ kernel_output_files=(
     "build/kernel/syscall/sys_new_event.o"
     "build/kernel/syscall/sys_get_next_event.o"
     "build/kernel/syscall/sys_get_mouse.o"
+    "build/kernel/syscall/sys_get_fb.o"
 
     "build/libk/stdio/kprintf.o"
     "build/libk/stdio/printf.o"
@@ -213,28 +213,23 @@ mkdir -p build/user/{app,sys}
 
 mkdir -p base_image/{app,sys}
 
-USER_GCC_OBJ_FLAGS="-g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/"
-USER_ASM_GCC_OBJ_FLAGS="-g -std=gnu99 -ffreestanding -O2 -Wall -Wextra"
-USER_GCC_ELF_FLAGS="-ffreestanding -O2 -nostdlib -lgcc -T user/user.ld"
+USER_GCC_OBJ_FLAGS="-g -std=gnu99 -fpie -T user/user.ld -Wl,-no-dynamic-linker -ffreestanding -O2 -Wall -Wextra -Ikernel/include/ -Ilibc/include/"
+USER_GCC_ELF_FLAGS="-pie -flinker-output=pie -T user/user.ld -ffreestanding -O2 -nostdlib -lgcc"
 make_user_application () {
     for i in $(find user/app/${1}/ -type f -name "*.c"); do
         mkdir -p build/$(dirname ${i})
         ${TOOLCHAIN_PATH}i686-elf-gcc -c $i -o build/${i%.*}.o $USER_GCC_OBJ_FLAGS
     done
-    ${TOOLCHAIN_PATH}i686-elf-gcc -o build/user/app/${1}.elf "${user_output_files[@]}" $(find build/user/app/${1}/ -type f -name "*.o") $USER_GCC_ELF_FLAGS
-    ${TOOLCHAIN_PATH}i686-elf-objcopy -O binary build/user/app/${1}.elf build/user/app/${1}.bin
-    BSS_SIZE=$(${TOOLCHAIN_PATH}i686-elf-size -x -A build/user/app/${1}.elf | grep ".bss" | awk '{print $2}')
-    ./mkapp.py build/user/app/${1}.bin base_image/app/${1}.app "${1}" $BSS_SIZE
+    ${TOOLCHAIN_PATH}i686-elf-gcc -o build/user/app/${1}/${1}.elf "${user_output_files[@]}" $(find build/user/app/${1}/ -type f -name "*.o") $USER_GCC_ELF_FLAGS
+    ./elf2app.py build/user/app/${1}/${1}.elf base_image/app/${1}.app
 }
 make_system_application () {
     for i in $(find user/sys/${1}/ -type f -name "*.c"); do
         mkdir -p build/$(dirname ${i})
         ${TOOLCHAIN_PATH}i686-elf-gcc -c $i -o build/${i%.*}.o $USER_GCC_OBJ_FLAGS
     done
-    ${TOOLCHAIN_PATH}i686-elf-gcc -o build/user/sys/${1}.elf "${user_output_files[@]}" $(find build/user/sys/${1}/ -type f -name "*.o") $USER_GCC_ELF_FLAGS
-    ${TOOLCHAIN_PATH}i686-elf-objcopy -O binary build/user/sys/${1}.elf build/user/sys/${1}.bin
-    BSS_SIZE=$(${TOOLCHAIN_PATH}i686-elf-size -x -A build/user/sys/${1}.elf | grep ".bss" | awk '{print $2}')
-    ./mkapp.py build/user/sys/${1}.bin base_image/sys/${1}.app "${1}" $BSS_SIZE
+    ${TOOLCHAIN_PATH}i686-elf-gcc -o build/user/sys/${1}/${1}.elf "${user_output_files[@]}" $(find build/user/sys/${1}/ -type f -name "*.o") $USER_GCC_ELF_FLAGS
+    ./elf2app.py build/user/sys/${1}/${1}.elf base_image/sys/${1}.app
 }
 
 # kernel
@@ -250,7 +245,7 @@ for file in "${user_input_files[@]}"; do
     ${TOOLCHAIN_PATH}i686-elf-gcc -c "$file" -o "build/${file%.*}.o" $USER_GCC_OBJ_FLAGS
 done
 for file in "${user_asm_input_files[@]}"; do
-    ${TOOLCHAIN_PATH}i686-elf-gcc -c "$file" -o "build/${file%.*}.o" $USER_ASM_GCC_ELF_FLAGS
+    ${TOOLCHAIN_PATH}i686-elf-gcc -c "$file" -o "build/${file%.*}.o" $USER_GCC_OBJ_FLAGS
 done
 
 # system applications

@@ -38,7 +38,8 @@ typedef enum floppy_dir_e {
     floppy_dir_write = 2
 } floppy_dir_t;
 
-void init_floppy();
+void init_floppy_1();
+void init_floppy_2();
 void floppy_interrupt_handler(uint8_t irq, trap_frame_t *trap_frame, uint32_t error);
 void floppy_motor(uint32_t base, int onoff);
 void floppy_motor_kill(int base);

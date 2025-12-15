@@ -1,7 +1,5 @@
 #pragma once
 
-#include <kernel/paging.h>
-
 #include <stdint.h>
 
 typedef struct font_s {
@@ -10,5 +8,20 @@ typedef struct font_s {
     uint8_t height;
 } font_t;
 
-void init_framebuffer(uint32_t physical_address, uint32_t pitch, uint8_t bpp, uint32_t color, uint8_t *font, uint8_t font_width, uint8_t font_height);
-void map_framebuffer(page_directory_t *page_directory);
+typedef struct fb_s {
+    uint8_t bpp;
+    uint16_t width;
+    uint16_t height;
+    uint32_t pitch;
+    uint8_t *framebuffer;
+    font_t font;
+} fb_t;
+
+uintptr_t init_framebuffer(
+    uintptr_t physical_address,
+    uint16_t width, uint16_t height,
+    uint32_t pitch, uint8_t bpp,
+    uint32_t fill_color,
+    uint8_t font_width, uint8_t font_height
+);
+fb_t *get_framebuffer();

@@ -1,20 +1,17 @@
 SECTIONS {
-    . = 0x08000000;
+	. = 0x00000000;
+	.text : { *(.text) *(.rodata) }
+	.data : { *(.data) *(.bss) }
 
-    .text : {
-        *(.text*)
-    }
-
-    .rodata ALIGN(16) : {
-        *(.rodata*)
-    }
-
-    .data ALIGN(16) : {
-        *(.data)
-    }
-
-    .bss ALIGN(16) : {
-        *(.bss)
-        *(COMMON)
-    }
+	/DISCARD/ : {
+		*(.note.GNU-stack)
+		*(.gnu_debuglink)
+		*(.gnu.lto_*)
+		*(.note.gnu.build-id)
+		*(.eh_frame_hdr)
+		*(.eh_frame_entry .eh_frame_entry.*)
+		*(.eh_frame)
+		*(.eh_frame.*)
+		*(.interp)
+	}
 }
