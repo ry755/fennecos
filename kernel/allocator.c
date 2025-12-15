@@ -1,22 +1,17 @@
 #include <kernel/allocator.h>
-#include <kernel/paging.h>
 
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
-extern uint32_t _kernel_end;
-extern page_directory_t *kernel_page_directory;
-
 block_header_t *free_list_head;
 bool allocator_initialized = false;
-uintptr_t kalloc_before_init_ptr = (uintptr_t) &_kernel_end;
 
 void init_allocator() {
     // FIXME: these values shouldn't be hardcoded
     free_list_head = (block_header_t *) 0x01000000;
-    free_list_head->size = 0x05000000;
+    free_list_head->size = 0x02000000;
     free_list_head->next = 0;
     free_list_head->prev = 0;
     free_list_head->actual_starting_address = 0;
@@ -25,6 +20,11 @@ void init_allocator() {
 }
 
 void *allocate(uint32_t size, bool align) {
+    if (!allocator_initialized) {
+        kprintf("attempting to allocate before allocator initialized!\n");
+        abort();
+    }
+
     block_header_t *block = free_list_head;
     uint32_t real_size = size + sizeof(block_header_t);
     if (align) real_size += 0x1000;
@@ -120,25 +120,4 @@ void free(void *ptr) {
         free_list_head->prev = bptr;
 
     free_list_head = bptr;
-}
-
-uint32_t kallocate(uint32_t size, bool align, uint32_t *physical) {
-    if (allocator_initialized) {
-        uint32_t ptr = (uint32_t) allocate(size, align);
-        if (physical) {
-            page_t *page = get_page((uint32_t) ptr, false, kernel_page_directory);
-            *physical = page->frame * 0x1000 + ((uint32_t) ptr & 0x0FFF);
-        }
-        return ptr;
-    } else {
-        if (align && (kalloc_before_init_ptr & 0x00000FFF)) {
-            kalloc_before_init_ptr &= 0xFFFFF000;
-            kalloc_before_init_ptr += 0x1000;
-        }
-        if (physical)
-            *physical = kalloc_before_init_ptr;
-        uint32_t ptr = kalloc_before_init_ptr;
-        kalloc_before_init_ptr += size;
-        return ptr;
-    }
 }

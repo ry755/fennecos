@@ -22,7 +22,7 @@ mkfs.fat -F12 $loop_device
 mkdir -p mountdir
 mount $loop_device mountdir
 cd mountdir
-rclone copy --exclude=res/ramdisk.img ../base_image/ .
+rclone copy --exclude=res/ramdisk.img --exclude=boot/kernel.sym ../base_image/ .
 ${GRUB_INSTALL} --target=i386-pc --install-modules="multiboot" --locales="" --themes="" --fonts="ascii" --allow-floppy --compress=xz --force --boot-directory="$PWD/boot" $loop_device
 if [ $GRUB_INSTALL = "grub2-install" ]; then
     mv boot/grub/* boot/grub2/

@@ -40,8 +40,6 @@ volatile uint32_t floppy_motor_ticks = 0;
 volatile uint32_t floppy_motor_state = 0;
 static uint32_t cyl_in_buffer = 0xFFFFFFFF;
 
-extern page_directory_t *kernel_page_directory;
-
 static inline void wait_for_floppy_interrupt() {
     while (!floppy_interrupt_occurred);
     floppy_interrupt_occurred = false;
@@ -99,10 +97,11 @@ static void floppy_dma_init(floppy_dir_t dir) {
     outb(0x0A, 0x02);   // unmask chan 2
 }
 
-void init_floppy() {
+void init_floppy_1() {
     install_interrupt_handler(FLOPPY_IRQ, floppy_interrupt_handler);
-    for (uint32_t i = 0; i < 5; i++)
-        map_physical_to_virtual(kernel_page_directory, FLOPPY_DMA_BASE + (i * 0x1000), FLOPPY_DMA_BASE + (i * 0x1000), true, true);
+}
+
+void init_floppy_2() {
     floppy_reset(FLOPPY_BASE);
 }
 

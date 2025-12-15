@@ -20,6 +20,8 @@ static char update_buffer[CONSOLE_HEIGHT][CONSOLE_WIDTH];
 static char update_color_buffer[CONSOLE_HEIGHT][CONSOLE_WIDTH][2];
 static int16_t console_x = 0;
 static int16_t console_y = 0;
+static uint16_t font_width;
+static uint16_t font_height;
 static uint8_t current_foreground_color_offset = DEFAULT_FOREGROUND_COLOR;
 static uint8_t current_background_color_offset = DEFAULT_BACKGROUND_COLOR;
 
@@ -27,8 +29,6 @@ static uint8_t escape_code_parameters[MAX_ESC_CODE_PARAMETERS];
 static uint8_t escape_code_parameter_count = 0;
 static bool is_in_escape_code = false;
 static bool is_in_line_mode = true;
-
-font_t *global_font = (void *) 0xFF000000;
 
 static uint32_t colors[9] = {
     0x1E1E2E, // black
@@ -55,7 +55,9 @@ void redraw_console() {
                 on_screen_color_buffer[y][x][BACKGROUND] = update_color_buffer[y][x][BACKGROUND];
                 foreground_color_offset = update_color_buffer[y][x][FOREGROUND];
                 background_color_offset = update_color_buffer[y][x][BACKGROUND];
-                draw_font_tile(update_buffer[y][x], x * global_font->width, y * global_font->height, colors[foreground_color_offset], colors[background_color_offset], global_font);
+                set_draw_position(x * font_width, y * font_height);
+                set_draw_color(colors[foreground_color_offset], colors[background_color_offset]);
+                draw_font_tile(update_buffer[y][x]);
                 update_buffer[y][x] = 0;
                 update_color_buffer[y][x][FOREGROUND] = 0;
                 update_color_buffer[y][x][BACKGROUND] = 0;
@@ -76,7 +78,9 @@ void redraw_console_line() {
             on_screen_color_buffer[console_y][x][BACKGROUND] = update_color_buffer[console_y][x][BACKGROUND];
             foreground_color_offset = update_color_buffer[console_y][x][FOREGROUND];
             background_color_offset = update_color_buffer[console_y][x][BACKGROUND];
-            draw_font_tile(update_buffer[console_y][x], x * global_font->width, console_y * global_font->height, colors[foreground_color_offset], colors[background_color_offset], global_font);
+            set_draw_position(x * font_width, console_y * font_height);
+            set_draw_color(colors[foreground_color_offset], colors[background_color_offset]);
+            draw_font_tile(update_buffer[console_y][x]);
         }
     }
 }
@@ -256,6 +260,10 @@ void print_string_to_console(char *string) {
 }
 
 void main(int argc, char *argv[]) {
+    font_t *font = get_global_font();
+    font_width = font->width;
+    font_height = font->height;
+
     event_t event;
     char read_buffer[1];
     char write_buffer[64];

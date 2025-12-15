@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 
+__attribute__((aligned(0x10)))
 struct gdt_entry_s gdt[GDT_ENTRIES];
 struct gdt_ptr_s gdt_ptr;
 

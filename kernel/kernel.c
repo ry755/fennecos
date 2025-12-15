@@ -1,5 +1,5 @@
 #include <kernel/allocator.h>
-#include <kernel/elf.h>
+#include <kernel/app.h>
 #include <kernel/floppy.h>
 #include <kernel/framebuffer.h>
 #include <kernel/gdt.h>
@@ -8,7 +8,6 @@
 #include <kernel/io.h>
 #include <kernel/mouse.h>
 #include <kernel/multiboot.h>
-#include <kernel/paging.h>
 #include <kernel/pic.h>
 #include <kernel/pit.h>
 #include <kernel/process.h>
@@ -35,7 +34,6 @@ multiboot_info_t copied_multiboot_struct;
 uint8_t temporary_font[FONT_WIDTH * FONT_HEIGHT * 256];
 
 extern char boot_disk_char;
-extern page_directory_t *kernel_page_directory;
 
 void kernel_main(multiboot_info_t *multiboot_struct) {
     init_gdt();
@@ -46,12 +44,12 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     init_timer();
     init_ps2_keyboard();
     init_mouse();
-    init_idt();
     memcpy(&copied_multiboot_struct, multiboot_struct, sizeof(multiboot_info_t));
-    init_paging();
     init_allocator();
     init_scheduler();
-    init_floppy();
+    init_floppy_1();
+    init_idt();
+    init_floppy_2();
 
     bool booting_from_floppy = (copied_multiboot_struct.boot_device >> 24) == 0x00 ? true : false;
     boot_disk_char = booting_from_floppy ? '2' : '1';
@@ -78,6 +76,17 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
         kprintf("error: %d\n", result);
     }
 
+    // initialize the framebuffer
+    uint8_t *font_buffer = (uint8_t *) init_framebuffer(
+        copied_multiboot_struct.framebuffer_addr,
+        copied_multiboot_struct.framebuffer_width,
+        copied_multiboot_struct.framebuffer_height,
+        copied_multiboot_struct.framebuffer_pitch,
+        copied_multiboot_struct.framebuffer_bpp,
+        0x1E1E2E,
+        FONT_WIDTH, FONT_HEIGHT
+    );
+
     // open and read the font file
     file_t font_file;
     result = open(&font_file, FONT_PATH, MODE_READ);
@@ -86,18 +95,10 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
         kprintf("error: %d\n", result);
         abort();
     }
-    uint32_t font_bytes_read = read(&font_file, (char *) temporary_font, FONT_WIDTH * FONT_HEIGHT * 256);
+    uint32_t font_bytes_read = read(&font_file, (char *) font_buffer, FONT_WIDTH * FONT_HEIGHT * 256);
     if (font_bytes_read != FONT_WIDTH * FONT_HEIGHT * 256)
         kprintf("font file read short\n");
     close(&font_file);
-
-    // initialize the framebuffer
-    init_framebuffer(
-        copied_multiboot_struct.framebuffer_addr,
-        copied_multiboot_struct.framebuffer_pitch,
-        copied_multiboot_struct.framebuffer_bpp,
-        0x1E1E2E, temporary_font, FONT_WIDTH, FONT_HEIGHT
-    );
 
     // create stdin and stdout and run the init process
     file_t stdin_file = {

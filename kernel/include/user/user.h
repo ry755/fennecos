@@ -54,3 +54,4 @@ uint32_t chdir(char *dir);
 uint32_t new_event(event_t *event);
 uint32_t get_next_event(event_t *event);
 uint32_t get_mouse();
+uint32_t get_fb();

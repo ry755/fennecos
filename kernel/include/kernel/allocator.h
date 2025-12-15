@@ -18,4 +18,3 @@ typedef struct block_header_s {
 void init_allocator();
 void *allocate(uint32_t size, bool aligned);
 void free(void *ptr);
-uint32_t kallocate(uint32_t size, bool align, uint32_t *physical);
