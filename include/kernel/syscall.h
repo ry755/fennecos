@@ -20,6 +20,8 @@
 #define SYS_get_next_event 16
 #define SYS_get_mouse      17
 #define SYS_get_fb         18
+#define SYS_alloc_memory   19
+#define SYS_free_memory    20
 
 uint32_t syscall(uint32_t syscall, uint32_t esp);
 uint32_t fetch_syscall_u32(uint8_t n);
