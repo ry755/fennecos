@@ -4,6 +4,7 @@
 
 #include <user/framebuffer.h>
 
+#include <stddef.h>
 #include <stdint.h>
 
 #define MODE_READ   0x01
@@ -55,3 +56,5 @@ uint32_t new_event(event_t *event);
 uint32_t get_next_event(event_t *event);
 uint32_t get_mouse();
 uint32_t get_fb();
+void *alloc_memory(size_t size);
+void free_memory(const void *ptr);

@@ -16,6 +16,8 @@
 .equ SYS_get_next_event, 16
 .equ SYS_get_mouse,      17
 .equ SYS_get_fb,         18
+.equ SYS_alloc_memory,   19
+.equ SYS_free_memory,    20
 
 .macro SYSC name
 .global \name
@@ -43,3 +45,5 @@ SYSC new_event
 SYSC get_next_event
 SYSC get_mouse
 SYSC get_fb
+SYSC alloc_memory
+SYSC free_memory

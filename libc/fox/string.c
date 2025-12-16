@@ -1,20 +1,9 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <fox/string.h>
+#include <user/user.h>
 
-static char malloc_buffer[131072];
-static char *malloc_ptr = malloc_buffer;
-static void *malloc(size_t size) {
-    size = (size + 7UL) & ~((size_t) 7UL);
-    void *ptr = malloc_ptr;
-    malloc_ptr += size;
-    return ptr;
-}
-static void free(const void *ptr) {
-    (void) ptr;
-    // TODO: send help
-}
+#include <fox/string.h>
 
 string_t string_from(const char *data) {
     string_t string = { data, strlen(data) };
@@ -28,7 +17,7 @@ string_t string_copy(const char *data) {
 string_t string_clone(string_t source) {
     size_t length = source.length, size = length + 1;
 
-    char *data = malloc(size);
+    char *data = alloc_memory(size);
     memcpy(data, source.data, size);
 
     string_t string = { data, length };
@@ -47,7 +36,7 @@ string_t string_slice(string_t source, size_t start, size_t end) {
 string_t string_concat(string_t string1, string_t string2) {
     size_t length = string1.length + string2.length, size = length + 1;
 
-    char *data = malloc(size);
+    char *data = alloc_memory(size);
     memcpy(data, string1.data, string1.length);
     memcpy(data + string1.length, string2.data, string2.length + 1);
 
@@ -56,7 +45,7 @@ string_t string_concat(string_t string1, string_t string2) {
 }
 
 void string_free(string_t string) {
-    free(string.data);
+    free_memory(string.data);
 }
 
 bool string_equals(string_t string1, string_t string2) {
@@ -68,7 +57,7 @@ string_t **string_tokenize(string_t source) {
     // list[0]: &S("echo")
     // list[1]: &S("hello")
     // list[2]: NULL
-    string_t **list = malloc(sizeof(string_t *) * 64);
+    string_t **list = alloc_memory(sizeof(string_t *) * 64);
     string_t **list_head = list;
     for (size_t i = 0; i < 64; i++) list[i] = NULL;
 
@@ -77,7 +66,7 @@ string_t **string_tokenize(string_t source) {
     for (size_t i = 0; i < source.length; i++) {
         if (source.data[i] == ' ') {
             if (current.length > 0) {
-                string_t *current_heap = malloc(sizeof(string_t));
+                string_t *current_heap = alloc_memory(sizeof(string_t));
 
                 *current_heap = current;
                 current = S("");
@@ -92,7 +81,7 @@ string_t **string_tokenize(string_t source) {
     }
 
     if (current.length > 0) {
-        string_t *current_heap = malloc(sizeof(string_t));
+        string_t *current_heap = alloc_memory(sizeof(string_t));
         *current_heap = current;
         *list_head = current_heap;
     }
