@@ -2,8 +2,11 @@
 
 boot.img
 floppy.img
-base_image/**/*.app
-base_image/**/*.elf
-base_image/**/*.sym
 bochs.conf
 build/
+
+**/*.o
+
+**/*.app
+**/*.elf
+**/*.sym
