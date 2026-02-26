@@ -45,7 +45,7 @@ void kernel_main(multiboot_info_t *multiboot_struct) {
     init_ps2_keyboard();
     init_mouse();
     memcpy(&copied_multiboot_struct, multiboot_struct, sizeof(multiboot_info_t));
-    init_allocator();
+    init_allocator(copied_multiboot_struct.mmap_addr, copied_multiboot_struct.mmap_length);
     init_scheduler();
     init_floppy_1();
     init_idt();

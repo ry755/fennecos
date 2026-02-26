@@ -15,6 +15,6 @@ typedef struct block_header_s {
                     // if not either, assume corruption
 } block_header_t;
 
-void init_allocator();
+void init_allocator(uint32_t mmap_addr, uint32_t mmap_length);
 void *allocate(uint32_t size, bool aligned);
 void free(void *ptr);
