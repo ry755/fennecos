@@ -38,4 +38,16 @@ typedef struct multiboot_info {
     uint8_t color_placeholder_3;
     uint8_t color_placeholder_4;
     uint8_t color_placeholder_5;
-} multiboot_info_t;
+} __attribute__((packed)) multiboot_info_t;
+
+typedef struct multiboot_mmap_entry {
+    uint32_t size;
+    uint64_t addr;
+    uint64_t len;
+#define MULTIBOOT_MEMORY_AVAILABLE              1
+#define MULTIBOOT_MEMORY_RESERVED               2
+#define MULTIBOOT_MEMORY_ACPI_RECLAIMABLE       3
+#define MULTIBOOT_MEMORY_NVS                    4
+#define MULTIBOOT_MEMORY_BADRAM                 5
+    uint32_t type;
+} __attribute__((packed)) multiboot_mmap_entry_t;

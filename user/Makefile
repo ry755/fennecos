@@ -33,7 +33,7 @@ pc := %
 %.app: $(USER_OUT_FILES) $(LIBC_OUT_FILES) $$(patsubst $$(pc).c, $$(pc).o, $$(call rwildcard,$$*,*.c))
 	@mkdir -p ../base_image/app ../base_image/sys
 	@echo '[APP] $@'
-	i686-elf-gcc -o $@.elf $^ $(USER_GCC_ELF_FLAGS)
+	@i686-elf-gcc -o $@.elf $^ $(USER_GCC_ELF_FLAGS)
 	@../elf2app.py $@.elf ../base_image/$@
 	@rm $@.elf
 
