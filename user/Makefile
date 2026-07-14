@@ -1,6 +1,7 @@
 .phony: all clean
 
 APPS := \
+	app/bitmap.app  \
 	app/demo.app    \
 	app/explode.app \
 	sys/console.app \
