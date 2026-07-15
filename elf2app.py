@@ -84,8 +84,9 @@ with open(sys.argv[1], "rb") as input, open(sys.argv[2], "wb") as output:
         seg_start = output.tell()
         print("segment at " + hex(seg_start) + " (vaddr = " + hex(seg.vaddr) + ")")
         for reloc in seg.relocations:
-            output.write(struct.pack("<I", reloc.offset + (output.tell() - seg_start)))
-            print("relocation at " + hex(reloc.offset + (output.tell() - seg_start)))
+            reloc_location = reloc.offset + code_ptr
+            output.write(struct.pack("<I", reloc_location))
+            print("relocation at " + hex(reloc_location))
             relocation_table_size += 1
 
     output.seek(start)

@@ -27,9 +27,10 @@ uint32_t relocate_app(uint8_t *buffer) {
 
     for (uint32_t i = 0; i < header->reloc_size; i++) {
         // add the base address of the executable to the bytes that need relocating
-        uint32_t reloc_offset = *((uint32_t *)buffer + header->reloc_offset + i);
+        uint32_t reloc_offset = *(uint32_t *)((uint8_t *)buffer + header->reloc_offset + (i * 4));
         kprintf("relocating code at 0x%X\n", reloc_offset);
-        *((uint32_t *)buffer + reloc_offset) += (uint32_t) buffer;
+        uint32_t reloc_location = (uint32_t) buffer + reloc_offset;
+        *((uint32_t *) reloc_location) += (uint32_t) buffer + header->code_offset;
     }
 
     return (uint32_t) buffer + header->code_offset;
