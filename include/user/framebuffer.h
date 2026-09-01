@@ -22,4 +22,5 @@ void set_draw_color(uint32_t foreground, uint32_t background);
 void set_draw_font(font_t *font);
 void draw_font_tile(char tile);
 void draw_string(char *str);
+font_t *get_font();
 font_t *get_global_font();

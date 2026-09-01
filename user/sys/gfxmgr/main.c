@@ -9,6 +9,11 @@
 #include "cursor.h"
 
 #include "framebuffer.h"
+#include "gfx.h"
+#include "window.h"
+
+extern nested_fb_t bg_fb;
+extern uint8_t bg_fb_data[640*480*4];
 
 nested_fb_t cursor_fb = {
     .next = NULL,
@@ -27,7 +32,7 @@ nested_fb_t cursor_fb = {
 uint8_t main_fb_data[640*480*4];
 nested_fb_t main_fb = {
     .next = &cursor_fb,
-    .child = NULL,
+    .child = &bg_fb,
     .data = main_fb_data,
     .x = 0,
     .y = 0,
@@ -60,8 +65,14 @@ void main() {
     hw_nested_fb.pitch = hw_fb->pitch;
     hw_nested_fb.bpp = hw_fb->bpp;
 
-    memset(main_fb_data, 0x22, 640*480*4); // fill with a grey-ish color
+    memset(bg_fb_data, 0x22, 640*480*4); // fill with a grey-ish color
     invalidate_whole_framebuffer_chain(&main_fb);
+
+    window_t test_window;
+    new_window(&test_window, 64, 64, 16, 16);
+    gfx_set_port(&test_window);
+    gfx_move_to(0, 0);
+    gfx_draw_string("hello world!!");
 
     uint32_t mouse = 0;
     while (true) {
@@ -77,6 +88,13 @@ void main() {
         mouse = get_mouse();
         cursor_fb.x = mouse & 0x0000FFFF;
         cursor_fb.y = mouse >> 16;
+
+        event_t e;
+        get_next_event(&e);
+        if (e.type == MOUSE_DOWN) {
+            move_window(&test_window, e.arg0, e.arg1);
+        }
+
         render(&main_fb, &hw_nested_fb);
     }
 }

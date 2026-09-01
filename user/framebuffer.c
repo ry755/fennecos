@@ -81,6 +81,11 @@ void draw_string(char *str) {
     }
 }
 
+font_t *get_font() {
+    if (framebuffer == NULL) init_framebuffer();
+    return (fb_draw_font_override == NULL) ? &framebuffer->font : fb_draw_font_override;
+}
+
 font_t *get_global_font() {
     if (framebuffer == NULL) init_framebuffer();
     return &framebuffer->font;
