@@ -6,7 +6,8 @@ APPS := \
 	app/explode.app \
 	sys/console.app \
 	sys/init.app    \
-	sys/sh.app
+	sys/sh.app      \
+	sys/gfxmgr.app
 
 all: $(APPS)
 
